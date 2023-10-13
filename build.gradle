@@ -1,7 +1,6 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-    id 'com.github.ben-manes.versions' version '0.39.0'
     id 'net.minecraftforge.gradleutils' version '2.+'
     id 'de.jjohannes.extra-java-module-info' version '0.11'
     id 'maven-publish'
@@ -12,21 +11,8 @@ java {
     withSourcesJar()
 }
 
-def isNonStable = { String version ->
-    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
-    def regex = /^[0-9,.v-]+(-r)?$/
-    return !stableKeyword && !(version ==~ regex)
-}
 
-dependencyUpdates {
-    rejectVersionIf {
-        isNonStable(it.candidate.version)
-    }
-}
-
-ext.asmVersion = 9.3
-
-group = 'cpw.mods'
+group = 'net.minecraftforge'
 version = gradleutils.getTagOffsetVersion()
 logger.lifecycle('Version: ' + version)
 
@@ -112,7 +98,6 @@ task jmh(type: JavaExec, dependsOn: jmhClasses) {
     def results = file("${project.reportsDir}/jmh/result.json")
     doFirst {
         results.parentFile.mkdirs()
-
         jvmArgs(
                 '--module-path', sourceSets.jmh.runtimeClasspath.asPath,
                 '--add-modules', 'ALL-MODULE-PATH',
@@ -138,33 +123,24 @@ task jmh(type: JavaExec, dependsOn: jmhClasses) {
     ]
 }
 
-ext.sharedManifest = manifest {
-    attributes(['Specification-Title': 'modlauncher',
-                'Specification-Vendor': 'forge',
-                'Specification-Version': '9.0', // We are version 9 of the modlauncher specification
-                'Implementation-Title': project.name,
-                'Implementation-Version': "${project.version}+${System.getenv('BUILD_NUMBER')?:0}+${gradleutils.gitInfo.branch}.${gradleutils.gitInfo.abbreviatedId}",
-                'Implementation-Vendor' :'forge',
-                'Implementation-Timestamp': java.time.Instant.now().toString(),
-                'Git-Commit': gradleutils.gitInfo.abbreviatedId,
-                'Git-Branch': gradleutils.gitInfo.branch,
-                'Build-Number': "${System.getenv('BUILD_NUMBER')?:0}" ],
-            'cpw/mods/modlauncher/api/')
-    attributes(['Specification-Title': 'modlauncherserviceapi',
-                'Specification-Vendor': 'forge',
-                'Specification-Version': '9.0', // We are version 9 of the modlauncher cpw.mods.modlauncher.serviceapi specification
-                "Implementation-Title": project.name,
-                'Implementation-Version': "${project.version}+${System.getenv('BUILD_NUMBER')?:0}+${gradleutils.gitInfo.branch}.${gradleutils.gitInfo.abbreviatedId}",
-                'Implementation-Vendor' :'forge',
-                'Implementation-Timestamp': java.time.Instant.now().toString(),
-                'Git-Commit': gradleutils.gitInfo.abbreviatedId,
-                'Git-Branch': gradleutils.gitInfo.branch,
-                'Build-Number': "${System.getenv('BUILD_NUMBER')?:0}"],
-            'cpw/mods/modlauncher/serviceapi/')
-}
-
 jar {
-    manifest.from(sharedManifest)
+    manifest {
+		attributes(['Specification-Title': 'modlauncher',
+			'Specification-Vendor': 'forge',
+			'Specification-Version': gradleutils.gitInfo.tag,
+			'Implementation-Title': project.name,
+			'Implementation-Version': project.version,
+			'Implementation-Vendor' :'forge'
+		]  as LinkedHashMap, 'cpw/mods/modlauncher/api/')
+		
+		attributes(['Specification-Title': 'modlauncherserviceapi',
+			'Specification-Vendor': 'forge',
+			'Specification-Version': gradleutils.gitInfo.tag,
+			"Implementation-Title": project.name,
+			'Implementation-Version': project.version,
+			'Implementation-Vendor' :'forge'
+		]  as LinkedHashMap, 'cpw/mods/modlauncher/serviceapi/')
+	}
 }
 
 tasks.withType(JavaCompile) {
@@ -184,24 +160,8 @@ publishing {
             pom {
                 name = 'Mod Launcher'
                 description = 'Common ModLauncher framework'
-                url = 'https://github.com/McModLauncher/modlauncher'
-                scm {
-                    url = 'https://github.com/McModLauncher/modlauncher'
-                    connection = 'scm:git:git://github.com/McModLauncher/modlauncher.git'
-                    developerConnection = 'scm:git:git@github.com:McModLauncher/modlauncher.git'
-                }
-                issueManagement {
-                    system = 'github'
-                    url = 'https://github.com/McModLauncher/modlauncher/issues'
-                }
-
-                developers {
-                    developer {
-                        id = 'cpw'
-                        name = 'cpw'
-                    }
-                }
-            }
+                url = 'https://github.com/MinecraftForge/modlauncher'
+			}
         }
     }
     repositories {

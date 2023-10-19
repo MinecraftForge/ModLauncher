@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Forge Development LLC
+    SPDX-License-Identifier: LGPL-3.0-only
+-->
+
 <Configuration status="warn" packages="cpw.mods.modlauncher.log">
     <filters>
         <MarkerFilter marker="NETWORK_PACKETS" onMatch="DENY" onMismatch="NEUTRAL"/>

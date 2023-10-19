@@ -1,33 +1,28 @@
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+#eclipse
+**/bin
+**/.settings
+**/.classpath
+**/.project
+**/.factorypath
+**/.apt_generated
 
-# Package Files #
-*.jar
-*.war
-*.ear
+#idea
+/.idea
+/*/out
+/classes
+*.iml
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-/.idea/
-/.gradle/
-/*/.gradle/
+# We however WANT the ide folder as it has tempaltes/configs for developing Forge.
+!ide/**
+
+#gradle
+/build
+/.gradle
+/*/build
+/*/.gradle
+
+#occupational hazards
 /repo/
-/build/
-/*/build/
-/logs/
-
-!/gradle/wrapper/gradle-wrapper.jar
-/out/
-/modlauncher.iml
-/test/gamedir/config/fml.toml
-/.run/testfulllaunch.run.xml
-/tests.txt
-.project
-.settings/
-.classpath
-/bin/
-/*/bin/
-
-# TC config
-/.teamcity/target
-*.jfr
+**/logs/
+**/profile.jfr
+/jmh_results.md

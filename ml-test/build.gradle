@@ -1,0 +1,96 @@
+plugins {
+    id 'org.cadixdev.licenser' version '0.6.1'
+    id 'eclipse'
+    id 'java-library'
+    id 'org.gradlex.extra-java-module-info' version '1.4.2'
+    id 'net.minecraftforge.gradleutils' version '2.+'
+}
+
+repositories {
+    mavenCentral()
+    maven gradleutils.forgeMaven
+    mavenLocal()
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(16)
+}
+
+license {
+    header = rootProject.file("LICENSE-header.txt")
+}
+
+test {
+    useJUnitPlatform()
+    reports.html.destination = rootProject.file("build/reports/")
+    reports.junitXml.destination = rootProject.file("build/test-results/")
+}
+
+dependencies {
+    implementation(rootProject)
+    testImplementation(libs.junit.api)
+    testImplementation(libs.unsafe)
+    testImplementation(libs.securemodules)
+    testImplementation(libs.jopt.simple)
+    testImplementation(project(':ml-test-jar'))
+    testImplementation(libs.bundles.powermock)
+    testImplementation(libs.bundles.log4j.runtime)
+    testCompileOnly(libs.nulls)
+    testRuntimeOnly(libs.bundles.junit.runtime)
+}
+
+extraJavaModuleInfo {
+    failOnMissingModuleInfo = false
+    automaticModule('jmh-core-1.35.jar', 'jmh.core')
+    automaticModule('jopt-simple-5.0.4.jar', 'jopt.simple')
+    automaticModule('powermock-core-2.0.9.jar', 'powermock.core')
+    automaticModule('powermock-reflect-2.0.9.jar', 'powermock.reflect')
+}
+
+// If we are being told a specific vendor then we are probably being run in parallel
+if (project.hasProperty('javaVendor') && project.hasProperty('javaVersion')) {
+    test.javaLauncher.set(javaToolchains.launcherFor {
+        it.vendor.set(JvmVendorSpec."${project.property('javaVendor').toUpperCase(Locale.ROOT)}" as JvmVendorSpec)
+        it.languageVersion.set(JavaLanguageVersion.of(project.property('javaVersion') as int))
+        it.implementation.set(JvmImplementation.VENDOR_SPECIFIC)
+    })
+} else if (!project.hasProperty('disable_bulk_tests')) {
+    configurations {
+        groovyScript
+    }
+
+    dependencies {
+        groovyScript 'org.apache.ivy:ivy:2.4.0'
+        groovyScript 'org.codehaus.groovy:groovy-all:3.0.19'
+    }
+
+    tasks.register('collectTests', JavaExec) {
+        classpath = configurations.groovyScript
+        main = 'groovy.ui.GroovyMain'
+        args '.github/workflows/aggregate-junit-tests.groovy'
+        workingDir rootProject.projectDir
+    }
+
+    VALID_VMS.each { javaVendor, javaVersions ->
+        javaVersions.each { javaVersion ->
+            def task = tasks.register("test${javaVendor}${javaVersion}", Test) {
+                useJUnitPlatform()
+                javaLauncher.set(javaToolchains.launcherFor {
+                    it.vendor.set(JvmVendorSpec."${javaVendor.toUpperCase(Locale.ROOT)}" as JvmVendorSpec)
+                    it.languageVersion.set(JavaLanguageVersion.of(javaVersion))
+                    it.implementation.set(JvmImplementation.VENDOR_SPECIFIC)
+                })
+                reports.html.destination = rootProject.file("build/test_artifacts/test-reports-${javaVendor}-${javaVersion}/")
+                reports.junitXml.destination = rootProject.file("build/test_artifacts/test-results-${javaVendor}-${javaVersion}/")
+            }
+            test.dependsOn(task)
+            collectTests.mustRunAfter(task)
+        }
+    }
+}
+
+// Hack eclipse into knowing that the gradle deps are modules
+eclipse.classpath {
+    containers 'org.eclipse.buildship.core.gradleclasspathcontainer'
+    file.whenMerged { entries.findAll { it.kind == 'lib' || it.path == 'org.eclipse.buildship.core.gradleclasspathcontainer' }.each { it.entryAttributes['module'] = 'true' } }
+}

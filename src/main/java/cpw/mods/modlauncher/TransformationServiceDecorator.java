@@ -1,19 +1,6 @@
 /*
- * ModLauncher - for launching Java programs with in-flight transformation ability.
- *
- *     Copyright (C) 2017-2019 cpw
- *
- *     This program is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU Lesser General Public License as published by
- *     the Free Software Foundation, version 3 of the License.
- *
- *     This program is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Lesser General Public License for more details.
- *
- *     You should have received a copy of the GNU Lesser General Public License
- *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * Copyright (c) Forge Development LLC
+ * SPDX-License-Identifier: LGPL-3.0-only
  */
 
 package cpw.mods.modlauncher;
@@ -23,13 +10,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.jetbrains.annotations.Nullable;
-import java.lang.reflect.*;
+
+import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
 import java.net.URL;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.*;
+import java.util.stream.Collectors;
 
 import static cpw.mods.modlauncher.LogMarkers.*;
 

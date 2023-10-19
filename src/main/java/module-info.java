@@ -1,10 +1,15 @@
+/*
+ * Copyright (c) Forge Development LLC
+ * SPDX-License-Identifier: LGPL-3.0-only
+ */
+
 module cpw.mods.modlauncher {
     requires java.base;
     requires org.apache.logging.log4j;
-    requires org.objectweb.asm.tree;
+    requires transitive org.objectweb.asm.tree;
     requires org.apache.logging.log4j.core;
     requires jopt.simple;
-    requires cpw.mods.securejarhandler;
+    requires transitive cpw.mods.securejarhandler;
     requires static org.jetbrains.annotations;
     exports cpw.mods.modlauncher.log;
     exports cpw.mods.modlauncher.serviceapi;

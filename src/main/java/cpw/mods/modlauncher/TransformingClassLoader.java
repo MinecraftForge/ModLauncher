@@ -6,7 +6,9 @@
 package cpw.mods.modlauncher;
 
 import cpw.mods.cl.ModuleClassLoader;
-import cpw.mods.modlauncher.api.*;
+import cpw.mods.modlauncher.api.IEnvironment;
+import cpw.mods.modlauncher.api.ITransformerActivity;
+import cpw.mods.modlauncher.api.IModuleLayerManager.Layer;
 
 import java.lang.module.Configuration;
 import java.util.*;
@@ -20,13 +22,18 @@ public class TransformingClassLoader extends ModuleClassLoader {
     }
     private final ClassTransformer classTransformer;
 
-    public TransformingClassLoader(TransformStore transformStore, LaunchPluginHandler pluginHandler, ModuleLayerHandler moduleLayerHandler) {
-        super("TRANSFORMER", moduleLayerHandler.getLayer(IModuleLayerManager.Layer.GAME).orElseThrow().configuration(), List.of(moduleLayerHandler.getLayer(IModuleLayerManager.Layer.SERVICE).orElseThrow()));
+    private static ModuleLayer get(ModuleLayerHandler layers, Layer layer) {
+        return layers.getLayer(layer).orElseThrow(() -> new NullPointerException("Failed to find " + layer.name() + " layer"));
+    }
+
+    public TransformingClassLoader(TransformStore transformStore, LaunchPluginHandler pluginHandler, ModuleLayerHandler layers) {
+        super("TRANSFORMER", get(layers, Layer.GAME).configuration(), List.of(get(layers, Layer.SERVICE)));
         this.classTransformer = new ClassTransformer(transformStore, pluginHandler, this);
     }
 
-    TransformingClassLoader(TransformStore transformStore, LaunchPluginHandler pluginHandler, TransformingClassLoaderBuilder builder, final Environment environment, final Configuration configuration, List<ModuleLayer> parentLayers) {
-        super("TRANSFORMER", configuration, parentLayers);
+    TransformingClassLoader(String name, ClassLoader parent, Configuration config, List<ModuleLayer> parentLayers, List<ClassLoader> parentLoaders,
+            TransformStore transformStore, LaunchPluginHandler pluginHandler, Environment environment) {
+        super(name, parent, config, parentLayers, parentLoaders, true);
         TransformerAuditTrail tat = new TransformerAuditTrail();
         environment.computePropertyIfAbsent(IEnvironment.Keys.AUDITTRAIL.get(), v->tat);
         this.classTransformer = new ClassTransformer(transformStore, pluginHandler, this, tat);

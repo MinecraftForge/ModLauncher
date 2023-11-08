@@ -2,7 +2,8 @@ plugins {
     id 'org.cadixdev.licenser' version '0.6.1'
     id 'eclipse'
     id 'java-library'
-    id 'org.gradlex.extra-java-module-info' version '1.4.2'
+    id 'org.gradlex.extra-java-module-info' version '1.5'
+    id 'com.github.ben-manes.versions' version '0.49.0'
     id 'net.minecraftforge.gradleutils' version '2.+'
     id 'com.diffplug.eclipse.apt' version '3.43.0'
 }
@@ -10,7 +11,6 @@ plugins {
 repositories {
     mavenCentral()
     maven gradleutils.forgeMaven
-    mavenLocal()
 }
 
 java {
@@ -20,22 +20,22 @@ java {
 license {
     header = rootProject.file("LICENSE-header.txt")
 }
-
 dependencies {
     implementation(rootProject)
+    implementation(libs.securemodules)
     implementation(project(':ml-test-jar'))
     implementation(libs.bundles.powermock)
-    implementation('org.openjdk.jmh:jmh-core:1.35')
-    runtimeOnly('org.openjdk.jmh:jmh-generator-annprocess:1.35')
+    implementation(libs.jmh.core)
+    runtimeOnly(libs.jmh.ap)
 
-    annotationProcessor('org.openjdk.jmh:jmh-generator-annprocess:1.35')
+    annotationProcessor(libs.jmh.ap)
 }
 
 extraJavaModuleInfo {
     failOnMissingModuleInfo = false
-    automaticModule('jmh-core-1.35.jar', 'jmh.core')
-    automaticModule('powermock-core-2.0.9.jar', 'powermock.core')
-    automaticModule('powermock-reflect-2.0.9.jar', 'powermock.reflect')
+    automaticModule('org.openjdk.jmh:jmh-core', 'jmh.core')
+    automaticModule('org.powermock:powermock-core', 'powermock.core')
+    automaticModule('org.powermock:powermock-reflect', 'powermock.reflect')
 }
 
 def jmhArgs = [

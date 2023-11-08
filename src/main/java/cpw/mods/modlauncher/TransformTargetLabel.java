@@ -5,13 +5,17 @@
 
 package cpw.mods.modlauncher;
 
-import cpw.mods.modlauncher.api.*;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
 
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.Collectors;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
+
+import cpw.mods.modlauncher.api.ITransformer;
+
+import java.util.EnumMap;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 import static cpw.mods.modlauncher.TransformTargetLabel.LabelType.*;
 
@@ -90,26 +94,15 @@ public final class TransformTargetLabel {
     }
 
     public enum LabelType {
-        FIELD(FieldNode.class), METHOD(MethodNode.class), CLASS(ClassNode.class), PRE_CLASS(ClassNode.class);
+        FIELD(FieldNode.class),
+        METHOD(MethodNode.class),
+        CLASS(ClassNode.class),
+        PRE_CLASS(ClassNode.class);
 
         private final Class<?> nodeType;
 
         LabelType(Class<?> nodeType) {
             this.nodeType = nodeType;
-        }
-
-        private static final Map<String, List<LabelType>> TYPE_LOOKUP;
-        static {
-            final Map<String, List<LabelType>> tmpTypes = new HashMap<>();
-            for (LabelType type : values()) {
-                tmpTypes.computeIfAbsent(type.nodeType.getName(), s -> new ArrayList<>()).add(type);
-            }
-            final Map<String, List<LabelType>> unmodifiableTypes = tmpTypes.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, pair -> Collections.unmodifiableList(pair.getValue())));
-            TYPE_LOOKUP = Collections.unmodifiableMap(unmodifiableTypes);
-        }
-
-        public static List<LabelType> getTypeFor(java.lang.reflect.Type type) {
-            return TYPE_LOOKUP.getOrDefault(type.getTypeName(), Collections.emptyList());
         }
 
         public Class<?> getNodeType() {

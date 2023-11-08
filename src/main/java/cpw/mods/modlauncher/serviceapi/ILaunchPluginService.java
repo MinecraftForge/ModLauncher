@@ -158,7 +158,17 @@ public interface ILaunchPluginService {
      */
     default void addResources(List<SecureJar> resources) {}
 
-    default void initializeLaunch(ITransformerLoader transformerLoader,  NamedPath[] specialPaths) {}
+    default void initializeLaunch(ITransformerLoader transformerLoader) {}
+
+    /** Nothing ever filled the special paths, there is no reason for it to exist.
+     * I *think* this method is just to give access to the transforming classloader
+     * in a round about way, I need to review this whole class
+     **/
+    @Deprecated(forRemoval = true, since = "10.1")
+    default void initializeLaunch(ITransformerLoader transformerLoader, NamedPath[] specialPaths) {
+        this.initializeLaunch(transformerLoader);
+    }
+
     /**
      * Get a plugin specific extension object from the plugin. This can be used to expose proprietary interfaces
      * to Launchers without ModLauncher needing to understand them.

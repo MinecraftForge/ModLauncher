@@ -3,7 +3,7 @@ clear
 #Remove last run just in case
 rm -rf artifacts/
 
-act --artifact-server-path ./artifacts
+act --artifact-server-path ./artifacts --workflows ./.github/workflows/test_jvms.yml
 
 # Uncompress all artifacts 
 find ./artifacts/ -name *.gz__ | while read filename; do gunzip --suffix=.gz__ "$filename"; done;

@@ -5,7 +5,8 @@ plugins {
     id 'java-library'
     id 'eclipse'
     id 'net.minecraftforge.gradleutils' version '2.+'
-    id 'de.jjohannes.extra-java-module-info' version '0.11'
+    id 'org.gradlex.extra-java-module-info' version '1.5'
+    id 'com.github.ben-manes.versions' version '0.49.0'
     id 'maven-publish'
 }
 
@@ -26,19 +27,20 @@ repositories {
 
 dependencies {
     api(libs.bundles.asm)
-    
+
     implementation(libs.securemodules)
     implementation(libs.bundles.log4j.runtime)
     implementation(libs.jopt.simple)
-    
+    implementation(libs.bootstrap.api)
+
     compileOnly(libs.nulls)
-    
+
     annotationProcessor(libs.log4j.core)
 }
 
 extraJavaModuleInfo {
     failOnMissingModuleInfo = false
-    automaticModule('jopt-simple-5.0.4.jar', 'jopt.simple')
+    automaticModule('net.sf.jopt-simple:jopt-simple', 'jopt.simple')
 }
 
 license {
@@ -47,24 +49,27 @@ license {
 
 jar {
     manifest {
-		attributes([
+        attributes([
+            'Forge-Module-Layer':    'boot'
+        ] as LinkedHashMap)
+        attributes([
             'Specification-Title':    'modlauncher',
-			'Specification-Vendor':   'Forge Development LLC',
-			'Specification-Version':  gradleutils.gitInfo.tag,
-			'Implementation-Title':   project.name,
-			'Implementation-Version': project.version,
-			'Implementation-Vendor':  'Forge Development LLC'
-		]  as LinkedHashMap, 'cpw/mods/modlauncher/api/')
-		
-		attributes([
+            'Specification-Vendor':   'Forge Development LLC',
+            'Specification-Version':  gradleutils.gitInfo.tag,
+            'Implementation-Title':   project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor':  'Forge Development LLC'
+        ] as LinkedHashMap, 'cpw/mods/modlauncher/api/')
+
+        attributes([
             'Specification-Title':    'modlauncherserviceapi',
-			'Specification-Vendor':   'Forge Development LLC',
-			'Specification-Version':  gradleutils.gitInfo.tag,
-			"Implementation-Title":   project.name,
-			'Implementation-Version': project.version,
-			'Implementation-Vendor':  'Forge Development LLC'
-		]  as LinkedHashMap, 'cpw/mods/modlauncher/serviceapi/')
-	}
+            'Specification-Vendor':   'Forge Development LLC',
+            'Specification-Version':  gradleutils.gitInfo.tag,
+            'Implementation-Title':   project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor':  'Forge Development LLC'
+        ]  as LinkedHashMap, 'cpw/mods/modlauncher/serviceapi/')
+    }
 }
 
 tasks.withType(JavaCompile) {
@@ -86,7 +91,7 @@ publishing {
             description = 'Common ModLauncher framework'
             url = 'https://github.com/MinecraftForge/ModLauncher'
             PomUtils.setGitHubDetails(pom, 'ModLauncher')
-            
+
             license PomUtils.Licenses.LGPLv2_1
             developers {
                 developer PomUtils.Developers.cpw
@@ -97,6 +102,16 @@ publishing {
     repositories {
         maven gradleutils.publishingForgeMaven
     }
+}
+
+tasks.register('writeManifest') {
+    doLast {
+        jar.manifest.writeTo(file('src/main/resources/META-INF/MANIFEST.MF'))
+    }
+}
+
+eclipse {
+    autoBuildTasks writeManifest
 }
 
 // Hack eclipse into knowing that the gradle deps are modules

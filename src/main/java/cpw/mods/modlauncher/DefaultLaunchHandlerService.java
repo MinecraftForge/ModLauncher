@@ -9,11 +9,11 @@ import cpw.mods.modlauncher.api.*;
 
 import java.lang.reflect.*;
 import java.nio.file.*;
-import java.util.concurrent.*;
 
 /**
- * Default launch handler service - will launch minecraft
+ * This has not worked in years
  */
+@Deprecated(forRemoval = true, since = "10.1")
 public class DefaultLaunchHandlerService implements ILaunchHandlerService {
     public static final String LAUNCH_PROPERTY = "minecraft.client.jar";
     public static final String LAUNCH_PATH_STRING = System.getProperty(LAUNCH_PROPERTY);

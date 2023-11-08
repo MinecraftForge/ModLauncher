@@ -35,6 +35,7 @@ class ClassTransformerTests {
     void testClassTransformer() throws Exception {
         MarkerManager.getMarker("CLASSDUMP");
         Configurator.setLevel(ClassTransformer.class.getName(), Level.TRACE);
+        UnsafeHacksUtil.hackPowermock();
         final TransformStore transformStore = new TransformStore();
         final ModuleLayerHandler layerHandler = Whitebox.invokeConstructor(ModuleLayerHandler.class);
         final LaunchPluginHandler lph = new LaunchPluginHandler(layerHandler);

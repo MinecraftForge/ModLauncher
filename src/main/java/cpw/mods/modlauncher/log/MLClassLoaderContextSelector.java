@@ -5,8 +5,9 @@
 
 package cpw.mods.modlauncher.log;
 
-import cpw.mods.cl.ModuleClassLoader;
 import org.apache.logging.log4j.core.selector.ClassLoaderContextSelector;
+
+import net.minecraftforge.securemodules.SecureModuleClassLoader;
 
 /**
  * A custom context selector to avoid initializing multiple log4j contexts due to {@link ModuleClassLoader#getParent()} always returning null (as a {@link ModuleClassLoader} can have multiple parents).
@@ -16,7 +17,7 @@ public class MLClassLoaderContextSelector extends ClassLoaderContextSelector {
 
     @Override
     protected String toContextMapKey(ClassLoader loader) {
-        if (loader instanceof ModuleClassLoader) {
+        if (loader instanceof SecureModuleClassLoader) {
             return "MCL";
         }
         return super.toContextMapKey(loader);

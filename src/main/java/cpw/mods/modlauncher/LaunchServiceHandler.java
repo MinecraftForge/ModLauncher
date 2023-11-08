@@ -5,72 +5,92 @@
 
 package cpw.mods.modlauncher;
 
-import cpw.mods.modlauncher.api.*;
-import cpw.mods.modlauncher.util.ServiceLoaderUtils;
+import cpw.mods.modlauncher.api.ILaunchHandlerService;
+import cpw.mods.modlauncher.api.IModuleLayerManager.Layer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
-import java.util.stream.*;
+import static cpw.mods.modlauncher.LogMarkers.MODLAUNCHER;
 
-import static cpw.mods.modlauncher.LogMarkers.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
 
 /**
  * Identifies the launch target and dispatches to it
  */
 class LaunchServiceHandler {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Map<String, LaunchServiceHandlerDecorator> launchHandlerLookup;
+    private final Map<String, ILaunchHandlerService> handlers = new HashMap<>();
 
-    public LaunchServiceHandler(final ModuleLayerHandler layerHandler) {
-        this.launchHandlerLookup = ServiceLoaderUtils.streamServiceLoader(()->ServiceLoader.load(layerHandler.getLayer(IModuleLayerManager.Layer.BOOT).orElseThrow(), ILaunchHandlerService.class), sce -> LOGGER.fatal("Encountered serious error loading transformation service, expect problems", sce))
-                .collect(Collectors.toMap(ILaunchHandlerService::name, LaunchServiceHandlerDecorator::new));
-        LOGGER.debug(MODLAUNCHER,"Found launch services [{}]", () -> String.join(",",launchHandlerLookup.keySet()));
+    public LaunchServiceHandler(ModuleLayerHandler layerHandler) {
+        var services = ServiceLoader.load(layerHandler.getLayer(Layer.BOOT).orElseThrow(), ILaunchHandlerService.class);
+        for (var loader = services.iterator(); loader.hasNext(); ) {
+            try {
+                var srvc  = loader.next();
+                handlers.put(srvc.name(), srvc);
+            } catch (ServiceConfigurationError sce) {
+                LOGGER.fatal("Encountered serious error loading transformation service, expect problems", sce);
+            }
+        }
+        LOGGER.debug(MODLAUNCHER, "Found launch services [{}]", () -> String.join(",", handlers.keySet()));
     }
 
     public Optional<ILaunchHandlerService> findLaunchHandler(final String name) {
-        return Optional.ofNullable(launchHandlerLookup.getOrDefault(name, null)).map(LaunchServiceHandlerDecorator::service);
+        return Optional.ofNullable(handlers.getOrDefault(name, null));
     }
 
-    private void launch(String target, String[] arguments, ModuleLayer gameLayer, TransformingClassLoader classLoader, final LaunchPluginHandler launchPluginHandler) {
-        final LaunchServiceHandlerDecorator launchServiceHandlerDecorator = launchHandlerLookup.get(target);
-        final NamedPath[] paths = launchServiceHandlerDecorator.service().getPaths();
+    private void launch(String target, String[] arguments, ModuleLayer gameLayer, TransformingClassLoader classLoader, LaunchPluginHandler launchPluginHandler) {
+        var launchServiceHandlerDecorator = handlers.get(target);
+        var paths = launchServiceHandlerDecorator.getPaths();
         launchPluginHandler.announceLaunch(classLoader, paths);
         LOGGER.info(MODLAUNCHER, "Launching target '{}' with arguments {}", target, hideAccessToken(arguments));
-        launchServiceHandlerDecorator.launch(arguments, gameLayer);
+        try {
+            launchServiceHandlerDecorator.launchService(arguments, gameLayer).run();
+        } catch (Throwable e) {
+            sneak(e);
+        }
     }
 
     static List<String> hideAccessToken(String[] arguments) {
-        final ArrayList<String> output = new ArrayList<>();
+        var output = new ArrayList<String>();
         for (int i = 0; i < arguments.length; i++) {
-            if (i > 0 && Objects.equals(arguments[i-1], "--accessToken")) {
-                output.add("❄❄❄❄❄❄❄❄");
-            } else {
+            if (i > 0 && Objects.equals(arguments[i-1], "--accessToken"))
+                output.add("**********");
+            else
                 output.add(arguments[i]);
-            }
         }
         return output;
     }
 
     public void launch(ArgumentHandler argumentHandler, ModuleLayer gameLayer, TransformingClassLoader classLoader, final LaunchPluginHandler launchPluginHandler) {
-        String launchTarget = argumentHandler.getLaunchTarget();
-        String[] args = argumentHandler.buildArgumentList();
+        var launchTarget = argumentHandler.getLaunchTarget();
+        var args = argumentHandler.buildArgumentList();
         launch(launchTarget, args, gameLayer, classLoader, launchPluginHandler);
     }
 
     TransformingClassLoaderBuilder identifyTransformationTargets(final ArgumentHandler argumentHandler) {
-        final String launchTarget = argumentHandler.getLaunchTarget();
-        final TransformingClassLoaderBuilder builder = new TransformingClassLoaderBuilder();
-        Arrays.stream(argumentHandler.getSpecialJars()).forEach(builder::addTransformationPath);
-        launchHandlerLookup.get(launchTarget).configureTransformationClassLoaderBuilder(builder);
+        var builder = new TransformingClassLoaderBuilder();
+        for (var path : argumentHandler.getSpecialJars())
+            builder.addTransformationPath(path);
         return builder;
     }
 
     void validateLaunchTarget(final ArgumentHandler argumentHandler) {
-        if (!launchHandlerLookup.containsKey(argumentHandler.getLaunchTarget())) {
-            LOGGER.error(MODLAUNCHER, "Cannot find launch target {}, unable to launch",
-                    argumentHandler.getLaunchTarget());
-            throw new RuntimeException("Cannot find launch target");
+        var target = argumentHandler.getLaunchTarget();
+        if (!handlers.containsKey(target)) {
+            LOGGER.error(MODLAUNCHER, "Cannot find launch target {}, unable to launch", target);
+            throw new IllegalArgumentException("Cannot find launch target " + target + " Known: " + String.join(",", handlers.keySet()));
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable, R> R sneak(Throwable exception) throws E {
+        throw (E)exception;
     }
 }

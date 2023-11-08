@@ -5,11 +5,10 @@
 
 package cpw.mods.modlauncher;
 
+import net.minecraftforge.securemodules.SecureModuleClassLoader;
 import net.minecraftforge.securemodules.SecureModuleFinder;
-import cpw.mods.cl.ModuleClassLoader;
 import cpw.mods.jarhandling.SecureJar;
 import cpw.mods.modlauncher.api.IModuleLayerManager;
-import cpw.mods.modlauncher.api.NamedPath;
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
@@ -17,79 +16,90 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-@SuppressWarnings("removal")
 public final class ModuleLayerHandler implements IModuleLayerManager {
-    record LayerInfo(ModuleLayer layer, ModuleClassLoader cl) {}
-
-    private record PathOrJar(NamedPath path, SecureJar jar) {
-        static PathOrJar from(SecureJar jar) {
-            return new PathOrJar(null, jar);
-        }
-        static PathOrJar from(NamedPath path) {
-            return new PathOrJar(path, null);
-        }
-
-        SecureJar build() {
-            return jar != null ? jar : SecureJar.from(path.paths());
-        }
-    }
-    private final EnumMap<Layer, List<PathOrJar>> layers = new EnumMap<>(Layer.class);
+    record LayerInfo(ModuleLayer layer, ClassLoader cl) {}
+    private final EnumMap<Layer, List<SecureJar>> layers = new EnumMap<>(Layer.class);
     private final EnumMap<Layer, LayerInfo> completedLayers = new EnumMap<>(Layer.class);
 
     ModuleLayerHandler() {
-        ClassLoader classLoader = getClass().getClassLoader();
-        // Create a new ModuleClassLoader from the boot module layer if it doesn't exist already.
-        // This allows us to launch without BootstrapLauncher.
-        ModuleClassLoader cl = null;
+        var classLoader = getClass().getClassLoader();
         var layer = getClass().getModule().getLayer();
-        if (classLoader instanceof ModuleClassLoader moduleCl) {
-            cl = moduleCl;
-        } else {
-            var cfg = ModuleLayer.boot().configuration().resolveAndBind(SecureModuleFinder.of(), ModuleFinder.ofSystem(), List.of());
-            var tmpcl = new ModuleClassLoader("BOOT", cfg, List.of(ModuleLayer.boot()));
-            layer = ModuleLayer.boot().defineModules(cfg, m -> tmpcl);
-            cl = tmpcl;
+        // If we have not booted into a Module layer, lets stick ourselves in one. This is here for unit tests.
+        if (layer == null) {
+            var cfg = ModuleLayer.boot().configuration().resolveAndBind(ModuleFinder.of(), ModuleFinder.ofSystem(), List.of());
+            var cl = new SecureModuleClassLoader("BOOT", classLoader, cfg, List.of(ModuleLayer.boot()));
+            layer = ModuleLayer.boot().defineModules(cfg, m -> cl);
+            System.out.println("Making new classloader: " + classLoader);
+            classLoader = cl;
         }
-        completedLayers.put(Layer.BOOT, new LayerInfo(layer, cl));
-    }
-
-    void addToLayer(final Layer layer, final SecureJar jar) {
-        if (completedLayers.containsKey(layer)) throw new IllegalStateException("Layer already populated");
-        layers.computeIfAbsent(layer, l->new ArrayList<>()).add(PathOrJar.from(jar));
-    }
-
-    void addToLayer(final Layer layer, final NamedPath namedPath) {
-        if (completedLayers.containsKey(layer)) throw new IllegalStateException("Layer already populated");
-        layers.computeIfAbsent(layer, l->new ArrayList<>()).add(PathOrJar.from(namedPath));
-    }
-
-    @SuppressWarnings("exports")
-    public LayerInfo buildLayer(final Layer layer, BiFunction<Configuration, List<ModuleLayer>, ModuleClassLoader> classLoaderSupplier) {
-        final var finder = layers.getOrDefault(layer, List.of()).stream()
-                .map(PathOrJar::build)
-                .toArray(SecureJar[]::new);
-        final var targets = Arrays.stream(finder).map(SecureJar::name).toList();
-        final var newConf = Configuration.resolveAndBind(SecureModuleFinder.of(finder), Arrays.stream(layer.getParent()).map(completedLayers::get).map(li->li.layer().configuration()).toList(), ModuleFinder.of(), targets);
-        final var allParents = Arrays.stream(layer.getParent()).map(completedLayers::get).map(LayerInfo::layer).<ModuleLayer>mapMulti((moduleLayer, comp)-> {
-            comp.accept(moduleLayer);
-            moduleLayer.parents().forEach(comp);
-        }).toList();
-        final var classLoader = classLoaderSupplier.apply(newConf, allParents);
-        final var modController = ModuleLayer.defineModules(newConf, Arrays.stream(layer.getParent()).map(completedLayers::get).map(LayerInfo::layer).toList(), f->classLoader);
-        completedLayers.put(layer, new LayerInfo(modController.layer(), classLoader));
-        classLoader.setFallbackClassLoader(completedLayers.get(Layer.BOOT).cl());
-        return new LayerInfo(modController.layer(), classLoader);
-    }
-    public LayerInfo buildLayer(final Layer layer) {
-        return buildLayer(layer, (cf, p) -> new ModuleClassLoader("LAYER "+layer.name(), cf, p));
+        completedLayers.put(Layer.BOOT, new LayerInfo(layer, classLoader));
     }
 
     @Override
-    public Optional<ModuleLayer> getLayer(final Layer layer) {
+    public Optional<ModuleLayer> getLayer(Layer layer) {
         return Optional.ofNullable(completedLayers.get(layer)).map(LayerInfo::layer);
     }
 
+    void addToLayer(Layer layer, SecureJar jar) {
+        if (completedLayers.containsKey(layer))
+             throw new IllegalStateException("Layer already populated");
+        layers.computeIfAbsent(layer, l -> new ArrayList<>()).add(jar);
+    }
+
+    /** TODO: Make package private */
+    @SuppressWarnings("exports")
+    @Deprecated(since = "10.1")
+    public LayerInfo buildLayer(Layer layer, BiFunction<Configuration, List<ModuleLayer>, ClassLoader> classLoaderSupplier) {
+        return build(layer, (cfg, layers, loaders) -> classLoaderSupplier.apply(cfg, layers));
+    }
+
+    LayerInfo build(Layer layer) {
+        return build(layer, (cfg, layers, loaders) -> new SecureModuleClassLoader("LAYER " + layer.name(), null, cfg, layers, loaders));
+    }
+
+    LayerInfo build(Layer layer, ClassLoaderFactory classLoaderSupplier) {
+        var jars = layers.getOrDefault(layer, List.of()).stream().toArray(SecureJar[]::new);
+        var targets = Arrays.stream(jars).map(SecureJar::name).toList();
+        var parentLayers = new ArrayList<ModuleLayer>();
+        var parentConfigs = new ArrayList<Configuration>();
+        var parentLoaders = new ArrayList<ClassLoader>();
+
+        for (var parent : layer.getParents()) {
+            var info = completedLayers.get(parent);
+            if (info == null)
+                throw new IllegalStateException("Attempted to build " + layer + " before it's parent " + parent + " was populated");
+            parentLayers.add(info.layer());
+            parentConfigs.add(info.layer().configuration());
+            parentLoaders.add(info.cl());
+        }
+
+        var cfg = Configuration.resolveAndBind(SecureModuleFinder.of(jars), parentConfigs, ModuleFinder.of(), targets);
+
+        var classLoader = classLoaderSupplier.create(cfg, parentLayers, parentLoaders);
+
+        // TODO: [ML] This should actually find the correct CL for each module, not just use the newly created one
+        var newLayer = ModuleLayer.defineModules(cfg,parentLayers, module -> classLoader).layer();
+
+        var info = new LayerInfo(newLayer, classLoader);
+        completedLayers.put(layer, info);
+        return info;
+    }
+
+    /** TODO: Make package private */
+    @SuppressWarnings("exports")
+    @Deprecated(since = "10.1")
+    public LayerInfo buildLayer(Layer layer) {
+        return build(layer);
+    }
+
+    /** TODO: Make package private */
+    @SuppressWarnings("exports")
+    @Deprecated(since = "10.1")
     public void updateLayer(Layer layer, Consumer<LayerInfo> action) {
         action.accept(completedLayers.get(layer));
+    }
+
+    interface ClassLoaderFactory {
+        ClassLoader create(Configuration config, List<ModuleLayer> parentLayers, List<ClassLoader> parentLoaders);
     }
 }

@@ -5,8 +5,6 @@
 
 package cpw.mods.modlauncher.util;
 
-import cpw.mods.niofs.union.UnionFileSystem;
-
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.ServiceConfigurationError;
@@ -15,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+@Deprecated(forRemoval = true, since = "10.1")
 public final class ServiceLoaderUtils {
     public static <T> Stream<T> streamServiceLoader(Supplier<ServiceLoader<T>> slSupplier, Consumer<ServiceConfigurationError> errorConsumer) {
         return streamWithErrorHandling(slSupplier.get(), errorConsumer);
@@ -32,12 +31,15 @@ public final class ServiceLoaderUtils {
     }
 
     public static String fileNameFor(Class<?> clazz) {
-        return clazz.getModule().getLayer().configuration()
-                .findModule(clazz.getModule().getName())
-                .flatMap(rm->rm.reference().location())
-                .map(Path::of)
-                .map(p -> p.getFileSystem() instanceof UnionFileSystem ufs ? ufs.getPrimaryPath() : p)
-                .map(p -> p.getFileName().toString())
-                .orElse("MISSING FILE");
+        var module = clazz.getModule();
+        var ref = module.getLayer().configuration().findModule(module.getName());
+        if (!ref.isPresent())
+            return "MISSING FILE";
+        var location = ref.get().reference().location();
+        if (!location.isPresent())
+            return "MISSING FILE";
+
+        var path = Path.of(location.get());
+        return path.toString();
     }
 }

@@ -7,11 +7,15 @@ package cpw.mods.modlauncher;
 
 import cpw.mods.modlauncher.api.ILaunchHandlerService;
 import cpw.mods.modlauncher.api.IModuleLayerManager.Layer;
+import cpw.mods.modlauncher.api.ServiceRunner;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import static cpw.mods.modlauncher.LogMarkers.MODLAUNCHER;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import java.util.concurrent.Callable;
 
 /**
  * Identifies the launch target and dispatches to it
@@ -46,12 +51,30 @@ class LaunchServiceHandler {
     }
 
     private void launch(String target, String[] arguments, ModuleLayer gameLayer, TransformingClassLoader classLoader, LaunchPluginHandler launchPluginHandler) {
-        var launchServiceHandlerDecorator = handlers.get(target);
-        var paths = launchServiceHandlerDecorator.getPaths();
+        var service = handlers.get(target);
+        var paths = service.getPaths();
         launchPluginHandler.announceLaunch(classLoader, paths);
         LOGGER.info(MODLAUNCHER, "Launching target '{}' with arguments {}", target, hideAccessToken(arguments));
+
+        ServiceRunner runner = null;
+
         try {
-            launchServiceHandlerDecorator.launchService(arguments, gameLayer).run();
+            runner = service.launchService(arguments, gameLayer);
+        } catch (AbstractMethodError e) {
+            var lookup = MethodHandles.lookup();
+            var type = MethodType.methodType(Callable.class, String[].class, ModuleLayer.class);
+            try {
+                var virtual = lookup.findVirtual(service.getClass(), "launchService", type);
+                Callable<Void> callable = (Callable<Void>)virtual.invokeExact(arguments, gameLayer);
+                runner = () -> callable.call();
+            } catch (Throwable t) {
+                sneak(t);
+            }
+        }
+
+        try {
+
+            runner.run();
         } catch (Throwable e) {
             sneak(e);
         }

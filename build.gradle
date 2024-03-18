@@ -1,13 +1,13 @@
 import net.minecraftforge.gradleutils.PomUtils
 
 plugins {
-    id 'org.cadixdev.licenser' version '0.6.1'
     id 'java-library'
     id 'eclipse'
-    id 'net.minecraftforge.gradleutils' version '2.+'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradleutils' version '[2.3,2.4)'
+    id 'net.minecraftforge.licenser' version '1.0.1'
     id 'org.gradlex.extra-java-module-info' version '1.5'
     id 'com.github.ben-manes.versions' version '0.49.0'
-    id 'maven-publish'
 }
 
 java {
@@ -36,6 +36,14 @@ dependencies {
     compileOnly(libs.nulls)
 
     annotationProcessor(libs.log4j.core)
+}
+
+configurations.all {
+    outgoing {
+        capability("net.minecraftforge:modlauncher:$version")
+        capability("net.minecraftforge:ModLauncher:$version") // Stupid case sensitivity when using project deps
+        capability("cpw.mods:modlauncher:$version")
+    }
 }
 
 extraJavaModuleInfo {
@@ -84,6 +92,9 @@ compileJava {
 
 publishing {
     publications.register('mavenJava', MavenPublication) {
+        configurations.all {
+            suppressPomMetadataWarningsFor(it.name)
+        }
         from components.java
         artifactId = 'modlauncher'
         pom {

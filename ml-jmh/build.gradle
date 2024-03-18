@@ -1,10 +1,10 @@
 plugins {
-    id 'org.cadixdev.licenser' version '0.6.1'
     id 'eclipse'
     id 'java-library'
     id 'org.gradlex.extra-java-module-info' version '1.5'
     id 'com.github.ben-manes.versions' version '0.49.0'
-    id 'net.minecraftforge.gradleutils' version '2.+'
+    id 'net.minecraftforge.gradleutils' version '[2.3,2.4)'
+    id 'net.minecraftforge.licenser' version '1.0.1'
     id 'com.diffplug.eclipse.apt' version '3.43.0'
 }
 
@@ -20,6 +20,7 @@ java {
 license {
     header = rootProject.file("LICENSE-header.txt")
 }
+
 dependencies {
     implementation(rootProject)
     implementation(libs.securemodules)

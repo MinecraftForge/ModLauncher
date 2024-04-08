@@ -16,6 +16,7 @@ import cpw.mods.modlauncher.api.INameMappingService;
 import cpw.mods.modlauncher.api.ITransformationService.Resource;
 import cpw.mods.modlauncher.api.TypesafeMap;
 import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import static cpw.mods.modlauncher.LogMarkers.*;
  */
 public class Launcher {
     public static Launcher INSTANCE;
+    private static final Logger LOGGER = LogManager.getLogger();
     private final TypesafeMap blackboard;
     private final TransformationServicesHandler transformationServicesHandler;
     private final Environment environment;
@@ -43,7 +45,7 @@ public class Launcher {
 
     private Launcher() {
         INSTANCE = this;
-        LogManager.getLogger().info(MODLAUNCHER,"ModLauncher {} starting: java version {} by {}; OS {} arch {} version {}", ()->IEnvironment.class.getPackage().getImplementationVersion(),  () -> System.getProperty("java.version"), ()->System.getProperty("java.vendor"), ()->System.getProperty("os.name"), ()->System.getProperty("os.arch"), ()->System.getProperty("os.version"));
+        LOGGER.info(MODLAUNCHER,"ModLauncher {} starting: java version {} by {}; OS {} arch {} version {}", ()->IEnvironment.class.getPackage().getImplementationVersion(),  () -> System.getProperty("java.version"), ()->System.getProperty("java.vendor"), ()->System.getProperty("os.name"), ()->System.getProperty("os.arch"), ()->System.getProperty("os.version"));
         this.moduleLayerHandler = new ModuleLayerHandler();
         this.launchService = new LaunchServiceHandler(this.moduleLayerHandler);
         this.blackboard = new TypesafeMap();
@@ -68,8 +70,8 @@ public class Launcher {
             JVM information: %s %s %s
             """, props.getProperty("java.vm.vendor"), props.getProperty("java.vm.name"), props.getProperty("java.vm.version"));
         }
-        LogManager.getLogger().info(MODLAUNCHER,"ModLauncher running: args {}", () -> LaunchServiceHandler.hideAccessToken(args));
-        LogManager.getLogger().info(MODLAUNCHER, "JVM identified as {} {} {}", props.getProperty("java.vm.vendor"), props.getProperty("java.vm.name"), props.getProperty("java.vm.version"));
+        LOGGER.info(MODLAUNCHER,"ModLauncher running: args {}", () -> LaunchServiceHandler.hideAccessToken(args));
+        LOGGER.info(MODLAUNCHER, "JVM identified as {} {} {}", props.getProperty("java.vm.vendor"), props.getProperty("java.vm.name"), props.getProperty("java.vm.version"));
         new Launcher().run(args);
     }
 

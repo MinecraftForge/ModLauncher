@@ -5,23 +5,18 @@
 
 package cpw.mods.modlauncher.log;
 
-import cpw.mods.modlauncher.Launcher;
-import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.ITransformerAuditTrail;
 import org.apache.logging.log4j.core.pattern.TextRenderer;
 
-import java.util.Optional;
-
+@Deprecated(forRemoval = true, since = "10.2.2")
 public class ExtraDataTextRenderer implements TextRenderer {
     private final TextRenderer wrapped;
-    private final Optional<ITransformerAuditTrail> auditData;
+    private final ITransformerAuditTrail trail;
     private final ThreadLocal<TransformerContext> currentClass = new ThreadLocal<>();
 
-    ExtraDataTextRenderer(final TextRenderer wrapped) {
+    ExtraDataTextRenderer(final TextRenderer wrapped, ITransformerAuditTrail trail) {
         this.wrapped = wrapped;
-        this.auditData = Optional.ofNullable(Launcher.INSTANCE).
-                map(Launcher::environment).
-                flatMap(env -> env.getProperty(IEnvironment.Keys.AUDITTRAIL.get()));
+        this.trail = trail;
     }
 
     @Override
@@ -38,8 +33,8 @@ public class ExtraDataTextRenderer implements TextRenderer {
             final TransformerContext classContext = currentClass.get();
             currentClass.remove();
             if (classContext != null) {
-                final Optional<String> auditLine = auditData.map(data -> data.getAuditString(classContext.getClassName()));
-                wrapped.render(" {"+ auditLine.orElse("") +"}", output, "StackTraceElement.Transformers");
+                final String auditLine = trail == null ? "" : trail.getAuditString(classContext.getClassName());
+                wrapped.render(" {" + auditLine + "}", output, "StackTraceElement.Transformers");
             }
             return;
         }

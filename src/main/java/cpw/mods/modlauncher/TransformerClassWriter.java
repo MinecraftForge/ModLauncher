@@ -71,7 +71,7 @@ class TransformerClassWriter extends ClassWriter {
         return CLASS_HIERARCHIES.get(typeName);
     }
 
-    private boolean isIntf(final String typeName) {
+    private static boolean isIntf(final String typeName) {
         //We don't need computeHierarchy as it has been called already from a different method every time this method is called
         return IS_INTERFACE.get(typeName);
     }
@@ -104,7 +104,7 @@ class TransformerClassWriter extends ClassWriter {
      * Computes the hierarchy for a specific class using the already loaded class object
      * Must be kept in sync with the file counterpart {@link SuperCollectingVisitor#visit(int, int, String, String, String, String[])}
      */
-    private void computeHierarchyFromClass(final String name, final Class<?> clazz) {
+    private static void computeHierarchyFromClass(final String name, final Class<?> clazz) {
         Class<?> superClass = clazz.getSuperclass();
         Set<String> hierarchies = new HashSet<>();
         if (superClass != null) {

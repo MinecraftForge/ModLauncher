@@ -125,7 +125,7 @@ public class ClassTransformer {
     }
 
     private static Path tempDir;
-    private void dumpClass(final byte[] clazz, String className) {
+    private static void dumpClass(final byte[] clazz, String className) {
         if (tempDir == null) {
             synchronized (ClassTransformer.class) {
                 if (tempDir == null) {
@@ -177,12 +177,12 @@ public class ClassTransformer {
         return node;
     }
 
-    private <T> TransformerVote<T> gatherVote(ITransformer<T> transformer, VotingContext context) {
+    private static <T> TransformerVote<T> gatherVote(ITransformer<T> transformer, VotingContext context) {
         TransformerVoteResult vr = transformer.castVote(context);
         return new TransformerVote<>(vr, transformer);
     }
 
-    private MessageDigest getSha256() {
+    private static MessageDigest getSha256() {
         try {
             return MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {

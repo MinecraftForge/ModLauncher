@@ -99,7 +99,7 @@ public class ArgumentHandler {
         return args.toArray(new String[0]);
     }
 
-    private void addOptionToString(OptionSpec<?> option, OptionSet optionSet, List<String> appendTo) {
+    private static void addOptionToString(OptionSpec<?> option, OptionSet optionSet, List<String> appendTo) {
         if (optionSet.has(option)) {
             appendTo.add("--"+option.options().get(0));
             appendTo.add(option.value(optionSet).toString());

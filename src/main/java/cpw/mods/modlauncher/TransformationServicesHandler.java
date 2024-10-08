@@ -85,7 +85,9 @@ class TransformationServicesHandler {
     private void initialiseTransformationServices(Environment environment) {
         LOGGER.debug(MODLAUNCHER,"Transformation services initializing");
 
-        serviceLookup.values().forEach(s -> s.onInitialize(environment));
+        for (TransformationServiceDecorator s : serviceLookup.values()) {
+            s.onInitialize(environment);
+        }
     }
 
     private List<ITransformationService.Resource> runScanningTransformationServices(Environment environment) {
@@ -113,7 +115,9 @@ class TransformationServicesHandler {
 
     private void loadTransformationServices(Environment environment) {
         LOGGER.debug(MODLAUNCHER,"Transformation services loading");
-        serviceLookup.values().forEach(s -> s.onLoad(environment, serviceLookup.keySet()));
+        for (TransformationServiceDecorator s : serviceLookup.values()) {
+            s.onLoad(environment, serviceLookup.keySet());
+        }
     }
 
     void discoverServices(final ArgumentHandler.DiscoveryData discoveryData) {

@@ -118,13 +118,13 @@ class TransformerClassWriter extends ClassWriter {
             hierarchies.add("java/lang/Object");
         }
         IS_INTERFACE.put(name, clazz.isInterface());
-        Arrays.stream(clazz.getInterfaces()).forEach(c->{
+        for (Class<?> c : clazz.getInterfaces()) {
             String n = c.getName().replace('.', '/');
             if (!CLASS_HIERARCHIES.containsKey(n))
                 computeHierarchyFromClass(n, c);
             hierarchies.add(n);
             hierarchies.addAll(CLASS_HIERARCHIES.get(n));
-        });
+        }
         CLASS_HIERARCHIES.put(name, hierarchies); //Only put the set in the map once it is fully populated, to prevent another thread from using incomplete data
     }
 
@@ -168,11 +168,11 @@ class TransformerClassWriter extends ClassWriter {
                 hierarchies.add("java/lang/Object");
             }
             IS_INTERFACE.put(name, (access & Opcodes.ACC_INTERFACE) != 0);
-            Arrays.stream(interfaces).forEach(n->{
+            for (String n : interfaces) {
                 computeHierarchy(n);
                 hierarchies.add(n);
                 hierarchies.addAll(CLASS_HIERARCHIES.get(n));
-            });
+            }
             CLASS_HIERARCHIES.put(name, hierarchies); //Only put the set in the map once it is fully populated, to prevent another thread from using incomplete data
         }
     }

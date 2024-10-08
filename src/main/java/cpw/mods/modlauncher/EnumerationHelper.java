@@ -36,6 +36,6 @@ public class EnumerationHelper {
     }
 
     public static <T> Function<String, Enumeration<T>> fromOptional(final Function<String, Optional<T>> additionalClassBytesLocator) {
-        return input -> Collections.enumeration(additionalClassBytesLocator.apply(input).map(Stream::of).orElseGet(Stream::empty).collect(Collectors.toList()));
+        return input -> Collections.enumeration(additionalClassBytesLocator.apply(input).stream().collect(Collectors.toList()));
     }
 }

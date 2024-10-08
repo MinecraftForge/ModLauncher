@@ -66,7 +66,7 @@ class LaunchServiceHandler {
             try {
                 var virtual = lookup.findVirtual(service.getClass(), "launchService", type);
                 Callable<Void> callable = (Callable<Void>)virtual.invokeExact(arguments, gameLayer);
-                runner = () -> callable.call();
+                runner = callable::call;
             } catch (Throwable t) {
                 sneak(t);
             }
@@ -83,7 +83,7 @@ class LaunchServiceHandler {
     static List<String> hideAccessToken(String[] arguments) {
         var output = new ArrayList<String>();
         for (int i = 0; i < arguments.length; i++) {
-            if (i > 0 && Objects.equals(arguments[i-1], "--accessToken"))
+            if (i > 0 && "--accessToken".equals(arguments[i - 1]))
                 output.add("**********");
             else
                 output.add(arguments[i]);

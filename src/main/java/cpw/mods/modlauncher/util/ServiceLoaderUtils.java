@@ -33,10 +33,10 @@ public final class ServiceLoaderUtils {
     public static String fileNameFor(Class<?> clazz) {
         var module = clazz.getModule();
         var ref = module.getLayer().configuration().findModule(module.getName());
-        if (!ref.isPresent())
+        if (ref.isEmpty())
             return "MISSING FILE";
         var location = ref.get().reference().location();
-        if (!location.isPresent())
+        if (location.isEmpty())
             return "MISSING FILE";
 
         var path = Path.of(location.get());

@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class TransformerAuditTrail implements ITransformerAuditTrail {
-    private Map<String, List<ITransformerActivity>> audit = new ConcurrentHashMap<>();
+    private final Map<String, List<ITransformerActivity>> audit = new ConcurrentHashMap<>();
 
     @Override
     public List<ITransformerActivity> getActivityFor(final String className) {
@@ -43,7 +43,7 @@ public class TransformerAuditTrail implements ITransformerAuditTrail {
         }
 
         public String getActivityString() {
-            return this.type.getLabel() + ":"+ String.join(":",this.context);
+            return this.type.getLabel() + ":" + String.join(":", this.context);
         }
     }
 
@@ -63,12 +63,13 @@ public class TransformerAuditTrail implements ITransformerAuditTrail {
         getTransformerActivities(clazz).add(new TransformerActivity(ITransformerActivity.Type.TRANSFORMER, concat(transformService.name(), transformer.labels())));
     }
 
-    private String[] concat(String first, String[] rest) {
+    private static String[] concat(String first, String[] rest) {
         final String[] res = new String[rest.length + 1];
         res[0] = first;
         System.arraycopy(rest, 0, res, 1, rest.length);
         return res;
     }
+
     private List<ITransformerActivity> getTransformerActivities(final String clazz) {
         return audit.computeIfAbsent(clazz, k->new ArrayList<>());
     }

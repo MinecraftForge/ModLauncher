@@ -36,7 +36,7 @@ public final class TransformTargetLabel {
     private TransformTargetLabel(String className, String elementName, String elementDescriptor, LabelType labelType) {
         this.className = Type.getObjectType(className.replace('.', '/'));
         this.elementName = elementName;
-        this.elementDescriptor = elementDescriptor.length() > 0 ? Type.getMethodType(elementDescriptor) : Type.VOID_TYPE;
+        this.elementDescriptor = !elementDescriptor.isEmpty() ? Type.getMethodType(elementDescriptor) : Type.VOID_TYPE;
         this.labelType = labelType;
     }
     public TransformTargetLabel(String className, String fieldName) {

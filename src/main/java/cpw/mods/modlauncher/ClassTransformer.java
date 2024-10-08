@@ -151,18 +151,18 @@ public class ClassTransformer {
         context.setNode(node);
         do {
             final Stream<TransformerVote<T>> voteResultStream = transformers.stream().map(t -> gatherVote(t, context));
-            final Map<TransformerVoteResult, List<TransformerVote<T>>> results = voteResultStream.collect(Collectors.groupingBy(TransformerVote::getResult));
+            final Map<TransformerVoteResult, List<TransformerVote<T>>> results = voteResultStream.collect(Collectors.groupingBy(TransformerVote::result));
             // Someone rejected the current state. We're done here, and cannot proceed.
             if (results.containsKey(TransformerVoteResult.REJECT)) {
                 throw new VoteRejectedException(results.get(TransformerVoteResult.REJECT), node.getClass());
             }
             // Remove all the "NO" voters - they don't wish to participate in further voting rounds
             if (results.containsKey(TransformerVoteResult.NO)) {
-                transformers.removeAll(results.get(TransformerVoteResult.NO).stream().map(TransformerVote::getTransformer).collect(Collectors.toList()));
+                transformers.removeAll(results.get(TransformerVoteResult.NO).stream().map(TransformerVote::transformer).toList());
             }
             // If there's at least one YES voter, let's apply the first one we find, remove them, and continue.
             if (results.containsKey(TransformerVoteResult.YES)) {
-                final ITransformer<T> transformer = results.get(TransformerVoteResult.YES).get(0).getTransformer();
+                final ITransformer<T> transformer = results.get(TransformerVoteResult.YES).get(0).transformer();
                 node = transformer.transform(node, context);
                 auditTrail.addTransformerAuditTrail(context.getClassName(), ((TransformerHolder<?>)transformer).owner(), transformer);
                 transformers.remove(transformer);

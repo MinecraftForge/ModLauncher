@@ -95,7 +95,7 @@ public class ArgumentHandler {
         addOptionToString(assetsDirOption, optionSet, args);
         addOptionToString(uuidOption, optionSet, args);
         List<?> nonOptionList = this.optionSet.nonOptionArguments();
-        nonOptionList.stream().map(Object::toString).forEach(args::add);
+        args.addAll(nonOptionList.stream().map(Object::toString).toList());
         return args.toArray(new String[0]);
     }
 

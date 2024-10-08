@@ -23,13 +23,9 @@ public class TransformerAuditTrail implements ITransformerAuditTrail {
         return Collections.unmodifiableList(getTransformerActivities(className));
     }
 
-    private static class TransformerActivity implements ITransformerActivity {
-        private final Type type;
-        private final String[] context;
-
-        private TransformerActivity(Type type, String... context) {
-            this.type = type;
-            this.context = context;
+    private record TransformerActivity(String[] context, Type type) implements ITransformerActivity {
+        public TransformerActivity(Type type, String... context) {
+            this(context, type);
         }
 
         @Override

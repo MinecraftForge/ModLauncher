@@ -70,7 +70,7 @@ public class Launcher {
             JVM information: %s %s %s
             """, props.getProperty("java.vm.vendor"), props.getProperty("java.vm.name"), props.getProperty("java.vm.version"));
         }
-        LOGGER.info(MODLAUNCHER,"ModLauncher running: args {}", () -> LaunchServiceHandler.hideAccessToken(args));
+        LOGGER.info(MODLAUNCHER,"ModLauncher running: args {}", LaunchServiceHandler.hideAccessToken(args));
         LOGGER.info(MODLAUNCHER, "JVM identified as {} {} {}", props.getProperty("java.vm.vendor"), props.getProperty("java.vm.name"), props.getProperty("java.vm.version"));
         new Launcher().run(args);
     }

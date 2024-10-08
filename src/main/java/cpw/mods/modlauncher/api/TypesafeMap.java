@@ -77,16 +77,12 @@ public final class TypesafeMap {
 
         @Override
         public int hashCode() {
-            return (int) (this.uniqueId ^ (this.uniqueId >>> 32));
+            return Long.hashCode(this.uniqueId);
         }
 
         @Override
         public boolean equals(Object obj) {
-            try {
-                return this.uniqueId == ((Key) obj).uniqueId;
-            } catch (ClassCastException cc) {
-                return false;
-            }
+            return obj instanceof Key<?> key && this.uniqueId == key.uniqueId;
         }
 
         @Override

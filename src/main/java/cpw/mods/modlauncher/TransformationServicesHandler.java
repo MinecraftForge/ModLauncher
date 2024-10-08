@@ -94,7 +94,7 @@ class TransformationServicesHandler {
         return serviceLookup.values()
                 .stream()
                 .map(s -> s.runScan(environment))
-                .<ITransformationService.Resource>mapMulti(Iterable::forEach)
+                .flatMap(List::stream)
                 .toList();
     }
 
@@ -168,8 +168,8 @@ class TransformationServicesHandler {
 
     public List<ITransformationService.Resource> triggerScanCompletion(IModuleLayerManager moduleLayerManager) {
         return serviceLookup.values().stream()
-                .map(tsd->tsd.onCompleteScan(moduleLayerManager))
-                .<ITransformationService.Resource>mapMulti(Iterable::forEach)
+                .map(tsd -> tsd.onCompleteScan(moduleLayerManager))
+                .flatMap(List::stream)
                 .toList();
 
     }

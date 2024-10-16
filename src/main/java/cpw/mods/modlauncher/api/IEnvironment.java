@@ -41,7 +41,9 @@ public interface IEnvironment {
      * @return The value of the key
      * @param <T> Type of key
      */
-    <T> T putPropertyIfAbsent(TypesafeMap.Key<T> key, T value);
+    default <T> T putPropertyIfAbsent(TypesafeMap.Key<T> key, T value) {
+        return computePropertyIfAbsent(key, k -> value);
+    }
 
     /**
      * Find the named {@link ILaunchPluginService}

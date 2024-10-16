@@ -5,7 +5,6 @@
 
 package cpw.mods.modlauncher;
 
-
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -24,21 +23,21 @@ import static cpw.mods.modlauncher.TransformTargetLabel.LabelType.*;
 /**
  * Detailed targetting information
  */
-public final class TransformTargetLabel {
+public record TransformTargetLabel(Type className, String elementName, Type elementDescriptor, LabelType labelType) {
 
-    private final Type className;
-    private final String elementName;
-    private final Type elementDescriptor;
-    private final LabelType labelType;
     TransformTargetLabel(ITransformer.Target target) {
         this(target.getClassName(), target.getElementName(), target.getElementDescriptor(), LabelType.valueOf(target.getTargetType().name()));
     }
+
     private TransformTargetLabel(String className, String elementName, String elementDescriptor, LabelType labelType) {
-        this.className = Type.getObjectType(className.replace('.', '/'));
-        this.elementName = elementName;
-        this.elementDescriptor = !elementDescriptor.isEmpty() ? Type.getMethodType(elementDescriptor) : Type.VOID_TYPE;
-        this.labelType = labelType;
+        this(
+            Type.getObjectType(className.replace('.', '/')),
+            elementName,
+            !elementDescriptor.isEmpty() ? Type.getMethodType(elementDescriptor) : Type.VOID_TYPE,
+            labelType
+        );
     }
+
     public TransformTargetLabel(String className, String fieldName) {
         this(className, fieldName, "", FIELD);
     }
@@ -58,19 +57,19 @@ public final class TransformTargetLabel {
             throw new IllegalArgumentException("Invalid type " + type + ", must be for class!");
     }
 
-    final Type getClassName() {
+    Type getClassName() {
         return this.className;
     }
 
-    public final String getElementName() {
+    public String getElementName() {
         return this.elementName;
     }
 
-    public final Type getElementDescriptor() {
+    public Type getElementDescriptor() {
         return this.elementDescriptor;
     }
 
-    final LabelType getLabelType() {
+    LabelType getLabelType() {
         return this.labelType;
     }
 
@@ -80,14 +79,11 @@ public final class TransformTargetLabel {
 
     @Override
     public boolean equals(Object obj) {
-        try {
-            TransformTargetLabel tl = (TransformTargetLabel) obj;
-            return Objects.equals(this.className, tl.className)
-                    && Objects.equals(this.elementName, tl.elementName)
-                    && Objects.equals(this.elementDescriptor, tl.elementDescriptor);
-        } catch (ClassCastException cce) {
-            return false;
-        }
+        if (obj == this) return true;
+        return obj instanceof TransformTargetLabel tl
+                && Objects.equals(this.className, tl.className)
+                && Objects.equals(this.elementName, tl.elementName)
+                && Objects.equals(this.elementDescriptor, tl.elementDescriptor);
     }
 
     @Override

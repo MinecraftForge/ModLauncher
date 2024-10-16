@@ -58,7 +58,7 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
     }
 
     LayerInfo build(Layer layer, ClassLoaderFactory classLoaderSupplier) {
-        var jars = layers.getOrDefault(layer, List.of()).stream().toArray(SecureJar[]::new);
+        var jars = layers.getOrDefault(layer, List.of()).toArray(SecureJar[]::new);
         var targets = Arrays.stream(jars).map(SecureJar::name).toList();
         var parentLayers = new ArrayList<ModuleLayer>();
         var parentConfigs = new ArrayList<Configuration>();

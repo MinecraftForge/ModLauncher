@@ -29,7 +29,7 @@ import java.util.concurrent.Callable;
 /**
  * Identifies the launch target and dispatches to it
  */
-class LaunchServiceHandler {
+final class LaunchServiceHandler {
     private static final Logger LOGGER = LogManager.getLogger();
     private final Map<String, ILaunchHandlerService> handlers = new HashMap<>();
 

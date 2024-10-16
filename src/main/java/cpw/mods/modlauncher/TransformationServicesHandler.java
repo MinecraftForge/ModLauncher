@@ -44,7 +44,7 @@ class TransformationServicesHandler {
         processArguments(argumentHandler, environment);
         initialiseTransformationServices(environment);
         // force the naming to "mojang" if nothing has been populated during transformer setup
-        environment.computePropertyIfAbsent(IEnvironment.Keys.NAMING.get(), a-> "mojang");
+        environment.putPropertyIfAbsent(IEnvironment.Keys.NAMING.get(), "mojang");
         nameMappingServiceHandler.bindNamingServices(environment.getProperty(Environment.Keys.NAMING.get()).orElse("mojang"));
         return runScanningTransformationServices(environment);
     }

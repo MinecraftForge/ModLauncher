@@ -18,7 +18,7 @@ import org.objectweb.asm.tree.ClassNode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-class TransformerClassWriter extends ClassWriter {
+final class TransformerClassWriter extends ClassWriter {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Map<String, String> CLASS_PARENTS = new ConcurrentHashMap<>();
     private static final Map<String, Set<String>> CLASS_HIERARCHIES = new ConcurrentHashMap<>();
@@ -150,7 +150,7 @@ class TransformerClassWriter extends ClassWriter {
         }
     }
 
-    private class SuperCollectingVisitor extends ClassVisitor {
+    private final class SuperCollectingVisitor extends ClassVisitor {
 
         public SuperCollectingVisitor() {
             super(Opcodes.ASM9);

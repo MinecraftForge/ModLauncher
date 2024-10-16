@@ -53,7 +53,7 @@ public class Launcher {
         environment.computePropertyIfAbsent(IEnvironment.Keys.MLSPEC_VERSION.get(), s->IEnvironment.class.getPackage().getSpecificationVersion());
         environment.computePropertyIfAbsent(IEnvironment.Keys.MLIMPL_VERSION.get(), s->IEnvironment.class.getPackage().getImplementationVersion());
         environment.computePropertyIfAbsent(IEnvironment.Keys.MODLIST.get(), s->new ArrayList<>());
-        environment.computePropertyIfAbsent(IEnvironment.Keys.SECURED_JARS_ENABLED.get(), k-> ProtectionDomainHelper.canHandleSecuredJars());
+        environment.putPropertyIfAbsent(IEnvironment.Keys.SECURED_JARS_ENABLED.get(), ProtectionDomainHelper.canHandleSecuredJars());
         this.transformStore = new TransformStore();
         this.transformationServicesHandler = new TransformationServicesHandler(this.transformStore, this.moduleLayerHandler);
         this.argumentHandler = new ArgumentHandler();

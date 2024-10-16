@@ -33,6 +33,16 @@ public interface IEnvironment {
      * @return The value of the key
      */
     <T> T computePropertyIfAbsent(TypesafeMap.Key<T> key, final Function<? super TypesafeMap.Key<T>, ? extends T> valueFunction);
+
+    /**
+     * Insert a value into the environment if not already present.
+     * @param key to insert
+     * @param value the value to insert
+     * @return The value of the key
+     * @param <T> Type of key
+     */
+    <T> T putPropertyIfAbsent(TypesafeMap.Key<T> key, T value);
+
     /**
      * Find the named {@link ILaunchPluginService}
      *

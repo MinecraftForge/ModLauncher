@@ -39,7 +39,7 @@ public class TransformingClassLoader extends ModuleClassLoader {
             TransformStore transformStore, LaunchPluginHandler pluginHandler, Environment environment) {
         super(name, parent, config, parentLayers, parentLoaders, true);
         TransformerAuditTrail tat = new TransformerAuditTrail();
-        environment.computePropertyIfAbsent(IEnvironment.Keys.AUDITTRAIL.get(), v->tat);
+        environment.putPropertyIfAbsent(IEnvironment.Keys.AUDITTRAIL.get(), tat);
         this.classTransformer = new ClassTransformer(transformStore, pluginHandler, this, tat);
     }
 

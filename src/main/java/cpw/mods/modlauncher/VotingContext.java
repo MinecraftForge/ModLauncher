@@ -95,13 +95,11 @@ class VotingContext implements ITransformerVotingContext {
         return result;
     }
 
-    private Object[] toObjectArray(final AbstractInsnNode insnNode) {
-        if (insnNode instanceof MethodInsnNode) {
-            final MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
+    private static Object[] toObjectArray(final AbstractInsnNode insnNode) {
+        if (insnNode instanceof MethodInsnNode methodInsnNode) {
             return new Object[] {methodInsnNode.name, methodInsnNode.desc, methodInsnNode.owner, methodInsnNode.itf};
         }
-        if (insnNode instanceof FieldInsnNode) {
-            final FieldInsnNode fieldInsnNode = (FieldInsnNode) insnNode;
+        if (insnNode instanceof FieldInsnNode fieldInsnNode) {
             return new Object[] {fieldInsnNode.name, fieldInsnNode.desc, fieldInsnNode.owner};
         }
         return EMPTY;

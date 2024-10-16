@@ -55,7 +55,7 @@ public class ArgumentHandler {
         env.computePropertyIfAbsent(IEnvironment.Keys.ASSETSDIR.get(), f -> this.optionSet.valueOf(assetsDirOption));
         env.computePropertyIfAbsent(IEnvironment.Keys.LAUNCHTARGET.get(), f -> this.optionSet.valueOf(launchTarget));
         env.computePropertyIfAbsent(IEnvironment.Keys.UUID.get(), f -> this.optionSet.valueOf(uuidOption));
-        resultConsumer.accept(this.optionSet, this::optionResults);
+        resultConsumer.accept(this.optionSet, ArgumentHandler::optionResults);
     }
 
     Path[] getSpecialJars() {
@@ -66,7 +66,7 @@ public class ArgumentHandler {
         return this.optionSet.valueOf(launchTarget);
     }
 
-    private ITransformationService.OptionResult optionResults(String serviceName, OptionSet set) {
+    private static ITransformationService.OptionResult optionResults(String serviceName, OptionSet set) {
         return new ITransformationService.OptionResult() {
             @Override
             public <V> V value(OptionSpec<V> option) {

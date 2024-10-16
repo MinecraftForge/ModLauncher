@@ -79,7 +79,9 @@ class TransformationServicesHandler {
     void initialiseServiceTransformers() {
         LOGGER.debug(MODLAUNCHER,"Transformation services loading transformers");
 
-        serviceLookup.values().forEach(s -> s.gatherTransformers(transformStore));
+        for (TransformationServiceDecorator s : serviceLookup.values()) {
+            s.gatherTransformers(transformStore);
+        }
     }
 
     private void initialiseTransformationServices(Environment environment) {

@@ -23,7 +23,11 @@ public class TransformingClassLoader extends ModuleClassLoader {
     private final ClassTransformer classTransformer;
 
     private static ModuleLayer get(ModuleLayerHandler layers, Layer layer) {
-        return layers.getLayer(layer).orElseThrow(() -> new NullPointerException("Failed to find " + layer.name() + " layer"));
+        var moduleLayer = layers.getLayer(layer).orElse(null);
+        if (moduleLayer == null)
+            throw new NullPointerException("Failed to find " + layer.name() + " layer");
+
+        return moduleLayer;
     }
 
     public TransformingClassLoader(TransformStore transformStore, LaunchPluginHandler pluginHandler, ModuleLayerHandler layers) {

@@ -26,7 +26,7 @@ import static cpw.mods.modlauncher.TransformTargetLabel.LabelType.*;
 public record TransformTargetLabel(Type className, String elementName, Type elementDescriptor, LabelType labelType) {
 
     TransformTargetLabel(ITransformer.Target target) {
-        this(target.getClassName(), target.getElementName(), target.getElementDescriptor(), LabelType.valueOf(target.getTargetType().name()));
+        this(target.className(), target.elementName(), target.elementDescriptor(), LabelType.valueOf(target.targetType().name()));
     }
 
     private TransformTargetLabel(String className, String elementName, String elementDescriptor, LabelType labelType) {

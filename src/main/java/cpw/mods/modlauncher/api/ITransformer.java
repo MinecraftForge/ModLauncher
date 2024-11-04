@@ -58,7 +58,7 @@ public interface ITransformer<T> {
 
     /**
      * Return a set of {@link Target} identifying which elements this transformer wishes to try
-     * and apply to. The {@link Target#getTargetType()} must match the T variable for the transformer
+     * and apply to. The {@link Target#targetType()} must match the T variable for the transformer
      * as documented in {@link TargetType}, other combinations will be rejected.
      *
      * @return The set of targets this transformer wishes to apply to
@@ -98,37 +98,27 @@ public interface ITransformer<T> {
 
     /**
      * Simple data holder indicating where the {@link ITransformer} can target.
+     * @param className         The name of the class being targeted
+     * @param elementName       The name of the element being targeted. This is the field name for a field,
+     *                          the method name for a method. Empty string for other types
+     * @param elementDescriptor The method's descriptor. Empty string for other types
+     * @param targetType        The {@link TargetType} for this target - it should match the ITransformer
+     *                          type variable T
      */
     @SuppressWarnings("SameParameterValue")
-    final class Target {
-        private final String className;
-        private final String elementName;
-        private final String elementDescriptor;
-        private final TargetType targetType;
-
+    record Target(String className, String elementName, String elementDescriptor, TargetType targetType) {
         /**
          * Build a new target. Ensure that the targetType matches the T type for the ITransformer
          * supplying the target.
          * <p>
          * In an obfuscated environment, this will be the obfuscated "notch" naming, in a
          * deobfuscated environment this will be the searge naming.
-         *
-         * @param className         The name of the class being targetted
-         * @param elementName       The name of the element being targetted. This is the field name for a field,
-         *                          the method name for a method. Empty string for other types
-         * @param elementDescriptor The method's descriptor. Empty string for other types
-         * @param targetType        The {@link TargetType} for this target - it should match the ITransformer
-         *                          type variable T
          */
-        Target(String className, String elementName, String elementDescriptor, TargetType targetType) {
+        public Target {
             Objects.requireNonNull(className, "Class Name cannot be null");
             Objects.requireNonNull(elementName, "Element Name cannot be null");
             Objects.requireNonNull(elementDescriptor, "Element Descriptor cannot be null");
             Objects.requireNonNull(targetType, "Target Type cannot be null");
-            this.className = className;
-            this.elementName = elementName;
-            this.elementDescriptor = elementDescriptor;
-            this.targetType = targetType;
         }
 
         /**

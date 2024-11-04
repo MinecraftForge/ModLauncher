@@ -27,7 +27,7 @@ import static cpw.mods.modlauncher.LogMarkers.MODLAUNCHER;
 public class ClassTransformer {
     private static final byte[] EMPTY = new byte[0];
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Marker CLASSDUMP = MarkerManager.getMarker("CLASSDUMP");
+    private static final Marker CLASSDUMP = MarkerManager.getMarker("CLASSDUMP");
     private final TransformStore transformers;
     private final LaunchPluginHandler pluginHandler;
     private final TransformingClassLoader transformingClassLoader;
@@ -170,7 +170,7 @@ public class ClassTransformer {
                 transformers.remove(transformer);
                 continue;
             }
-            
+
             // If we get here and find a DEFER, it means everyone just voted to DEFER. That's an untenable state and we cannot proceed.
             if (results.containsKey(TransformerVoteResult.DEFER)) {
                 throw new VoteDeadlockException(results.get(TransformerVoteResult.DEFER), node.getClass());

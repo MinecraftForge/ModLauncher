@@ -19,6 +19,10 @@ public interface IModuleLayerManager {
 
         private final List<Layer> parents;
 
+        Layer(Layer parent) {
+            this.parents = List.of(parent);
+        }
+
         Layer(Layer... parent) {
             this.parents = List.of(parent);
         }

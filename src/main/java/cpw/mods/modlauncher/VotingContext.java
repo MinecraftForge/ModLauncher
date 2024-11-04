@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * The internal vote context structure.
  */
-class VotingContext implements ITransformerVotingContext {
+final class VotingContext implements ITransformerVotingContext {
     private static final Object[] EMPTY = new Object[0];
     private final String className;
     private final boolean classExists;

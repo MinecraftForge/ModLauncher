@@ -151,7 +151,7 @@ public class ClassTransformer {
         context.setNode(node);
         do {
             final Stream<TransformerVote<T>> voteResultStream = transformers.stream().map(t -> gatherVote(t, context));
-            final Map<TransformerVoteResult, List<TransformerVote<T>>> results = voteResultStream.collect(Collectors.groupingBy(TransformerVote::result));
+            final Map<TransformerVoteResult, List<TransformerVote<T>>> results = voteResultStream.collect(Collectors.groupingBy(TransformerVote::result, () -> new EnumMap<>(TransformerVoteResult.class), Collectors.toList()));
             // Someone rejected the current state. We're done here, and cannot proceed.
             if (results.containsKey(TransformerVoteResult.REJECT)) {
                 throw new VoteRejectedException(results.get(TransformerVoteResult.REJECT), node.getClass());
@@ -183,11 +183,21 @@ public class ClassTransformer {
     }
 
     private static MessageDigest getSha256() {
-        try {
-            return MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("HUH");
+        final class LazyInit {
+            private static final MessageDigest SHA256;
+
+            static {
+                try {
+                    SHA256 = MessageDigest.getInstance("SHA-256");
+                } catch (NoSuchAlgorithmException e) {
+                    throw new RuntimeException("HUH");
+                }
+            }
+
+            private LazyInit() {}
         }
+
+        return LazyInit.SHA256;
     }
 
     TransformingClassLoader getTransformingClassLoader() {

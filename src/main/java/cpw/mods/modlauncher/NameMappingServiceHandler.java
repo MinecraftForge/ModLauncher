@@ -21,7 +21,7 @@ import java.util.function.BiFunction;
 /**
  * Allow names to be transformed between naming domains.
  */
-class NameMappingServiceHandler {
+final class NameMappingServiceHandler {
     private static final Logger LOGGER = LogManager.getLogger();
     private final Map<String, INameMappingService> allKnown = new HashMap<>();
     private final Map<String, INameMappingService> active = new HashMap<>();

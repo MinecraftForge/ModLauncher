@@ -27,7 +27,7 @@ import java.util.function.BiFunction;
 
 import static cpw.mods.modlauncher.LogMarkers.*;
 
-class TransformationServicesHandler {
+final class TransformationServicesHandler {
     private static final Logger LOGGER = LogManager.getLogger();
     private Map<String, TransformationServiceDecorator> serviceLookup;
     private final TransformStore transformStore;

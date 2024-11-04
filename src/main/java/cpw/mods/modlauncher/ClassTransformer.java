@@ -150,24 +150,27 @@ public class ClassTransformer {
     private <T> T performVote(List<ITransformer<T>> transformers, T node, VotingContext context) {
         context.setNode(node);
         do {
-            final Stream<TransformerVote<T>> voteResultStream = transformers.stream().map(t -> gatherVote(t, context));
-            final Map<TransformerVoteResult, List<TransformerVote<T>>> results = voteResultStream.collect(Collectors.groupingBy(TransformerVote::result, () -> new EnumMap<>(TransformerVoteResult.class), Collectors.toList()));
+            EnumMap<TransformerVoteResult, List<TransformerVote<T>>> results = gatherVotes(transformers, context);
+
             // Someone rejected the current state. We're done here, and cannot proceed.
-            if (results.containsKey(TransformerVoteResult.REJECT)) {
+            if (results.containsKey(TransformerVoteResult.REJECT))
                 throw new VoteRejectedException(results.get(TransformerVoteResult.REJECT), node.getClass());
-            }
+
             // Remove all the "NO" voters - they don't wish to participate in further voting rounds
-            if (results.containsKey(TransformerVoteResult.NO)) {
-                transformers.removeAll(results.get(TransformerVoteResult.NO).stream().map(TransformerVote::transformer).toList());
-            }
+            var noVotes = results.get(TransformerVoteResult.NO);
+            if (noVotes != null)
+                transformers.removeAll(noVotes.stream().map(TransformerVote::transformer).toList());
+
             // If there's at least one YES voter, let's apply the first one we find, remove them, and continue.
-            if (results.containsKey(TransformerVoteResult.YES)) {
-                final ITransformer<T> transformer = results.get(TransformerVoteResult.YES).get(0).transformer();
+            var yesVotes = results.get(TransformerVoteResult.YES);
+            if (yesVotes != null) {
+                final ITransformer<T> transformer = yesVotes.get(0).transformer();
                 node = transformer.transform(node, context);
-                auditTrail.addTransformerAuditTrail(context.getClassName(), ((TransformerHolder<?>)transformer).owner(), transformer);
+                auditTrail.addTransformerAuditTrail(context.getClassName(), ((TransformerHolder<?>) transformer).owner(), transformer);
                 transformers.remove(transformer);
                 continue;
             }
+            
             // If we get here and find a DEFER, it means everyone just voted to DEFER. That's an untenable state and we cannot proceed.
             if (results.containsKey(TransformerVoteResult.DEFER)) {
                 throw new VoteDeadlockException(results.get(TransformerVoteResult.DEFER), node.getClass());
@@ -177,9 +180,14 @@ public class ClassTransformer {
         return node;
     }
 
-    private static <T> TransformerVote<T> gatherVote(ITransformer<T> transformer, VotingContext context) {
-        TransformerVoteResult vr = transformer.castVote(context);
-        return new TransformerVote<>(vr, transformer);
+    private static <T> EnumMap<TransformerVoteResult, List<TransformerVote<T>>> gatherVotes(List<ITransformer<T>> transformers, VotingContext context) {
+        var results = new EnumMap<TransformerVoteResult, List<TransformerVote<T>>>(TransformerVoteResult.class);
+        for (ITransformer<T> transformer : transformers) {
+            var voteResult = transformer.castVote(context);
+            results.computeIfAbsent(voteResult, k -> new ArrayList<>())
+                    .add(new TransformerVote<>(voteResult, transformer));
+        }
+        return results;
     }
 
     private static MessageDigest getSha256() {

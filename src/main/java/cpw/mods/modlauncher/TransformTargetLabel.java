@@ -23,19 +23,21 @@ import static cpw.mods.modlauncher.TransformTargetLabel.LabelType.*;
 /**
  * Detailed targetting information
  */
-public record TransformTargetLabel(Type className, String elementName, Type elementDescriptor, LabelType labelType) {
+public final class TransformTargetLabel {
+    private final Type className;
+    private final String elementName;
+    private final Type elementDescriptor;
+    private final LabelType labelType;
 
     TransformTargetLabel(ITransformer.Target target) {
         this(target.className(), target.elementName(), target.elementDescriptor(), LabelType.valueOf(target.targetType().name()));
     }
 
     private TransformTargetLabel(String className, String elementName, String elementDescriptor, LabelType labelType) {
-        this(
-            Type.getObjectType(className.replace('.', '/')),
-            elementName,
-            !elementDescriptor.isEmpty() ? Type.getMethodType(elementDescriptor) : Type.VOID_TYPE,
-            labelType
-        );
+        this.className = Type.getObjectType(className.replace('.', '/'));
+        this.elementName = elementName;
+        this.elementDescriptor = !elementDescriptor.isEmpty() ? Type.getMethodType(elementDescriptor) : Type.VOID_TYPE;
+        this.labelType = labelType;
     }
 
     public TransformTargetLabel(String className, String fieldName) {

@@ -81,7 +81,9 @@ public class LaunchPluginHandler {
     }
 
     void offerScanResultsToPlugins(List<SecureJar> scanResults) {
-        plugins.values().forEach(p -> p.addResources(scanResults));
+        for (ILaunchPluginService p : plugins.values()) {
+            p.addResources(scanResults);
+        }
     }
 
     int offerClassNodeToPlugins(Phase phase, List<ILaunchPluginService> plugins, @Nullable ClassNode node, Type className, TransformerAuditTrail auditTrail, String reason) {

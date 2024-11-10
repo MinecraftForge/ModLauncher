@@ -18,7 +18,7 @@ import org.objectweb.asm.tree.ClassNode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-class TransformerClassWriter extends ClassWriter {
+final class TransformerClassWriter extends ClassWriter {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Map<String, String> CLASS_PARENTS = new ConcurrentHashMap<>();
     private static final Map<String, Set<String>> CLASS_HIERARCHIES = new ConcurrentHashMap<>();
@@ -71,7 +71,7 @@ class TransformerClassWriter extends ClassWriter {
         return CLASS_HIERARCHIES.get(typeName);
     }
 
-    private boolean isIntf(final String typeName) {
+    private static boolean isIntf(final String typeName) {
         //We don't need computeHierarchy as it has been called already from a different method every time this method is called
         return IS_INTERFACE.get(typeName);
     }
@@ -104,7 +104,7 @@ class TransformerClassWriter extends ClassWriter {
      * Computes the hierarchy for a specific class using the already loaded class object
      * Must be kept in sync with the file counterpart {@link SuperCollectingVisitor#visit(int, int, String, String, String, String[])}
      */
-    private void computeHierarchyFromClass(final String name, final Class<?> clazz) {
+    private static void computeHierarchyFromClass(final String name, final Class<?> clazz) {
         Class<?> superClass = clazz.getSuperclass();
         Set<String> hierarchies = new HashSet<>();
         if (superClass != null) {
@@ -118,13 +118,13 @@ class TransformerClassWriter extends ClassWriter {
             hierarchies.add("java/lang/Object");
         }
         IS_INTERFACE.put(name, clazz.isInterface());
-        Arrays.stream(clazz.getInterfaces()).forEach(c->{
+        for (Class<?> c : clazz.getInterfaces()) {
             String n = c.getName().replace('.', '/');
             if (!CLASS_HIERARCHIES.containsKey(n))
                 computeHierarchyFromClass(n, c);
             hierarchies.add(n);
             hierarchies.addAll(CLASS_HIERARCHIES.get(n));
-        });
+        }
         CLASS_HIERARCHIES.put(name, hierarchies); //Only put the set in the map once it is fully populated, to prevent another thread from using incomplete data
     }
 
@@ -150,7 +150,7 @@ class TransformerClassWriter extends ClassWriter {
         }
     }
 
-    private class SuperCollectingVisitor extends ClassVisitor {
+    private final class SuperCollectingVisitor extends ClassVisitor {
 
         public SuperCollectingVisitor() {
             super(Opcodes.ASM9);
@@ -168,11 +168,11 @@ class TransformerClassWriter extends ClassWriter {
                 hierarchies.add("java/lang/Object");
             }
             IS_INTERFACE.put(name, (access & Opcodes.ACC_INTERFACE) != 0);
-            Arrays.stream(interfaces).forEach(n->{
+            for (String n : interfaces) {
                 computeHierarchy(n);
                 hierarchies.add(n);
                 hierarchies.addAll(CLASS_HIERARCHIES.get(n));
-            });
+            }
             CLASS_HIERARCHIES.put(name, hierarchies); //Only put the set in the map once it is fully populated, to prevent another thread from using incomplete data
         }
     }

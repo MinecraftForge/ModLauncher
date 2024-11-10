@@ -34,9 +34,18 @@ public final class TypesafeMap {
         return computeIfAbsent(this.map, key, valueFunction);
     }
 
+    public <V> V putIfAbsent(Key<V> key, V value) {
+        return putIfAbsent(this.map, key, value);
+    }
+
     @SuppressWarnings("unchecked")
-    private <C1, C2, V> V computeIfAbsent(ConcurrentHashMap<C1, C2> map, Key<V> key, Function<? super Key<V>, ? extends V> valueFunction) {
+    private static <C1, C2, V> V computeIfAbsent(ConcurrentHashMap<C1, C2> map, Key<V> key, Function<? super Key<V>, ? extends V> valueFunction) {
         return (V) map.computeIfAbsent((C1) key, (Function<? super C1, ? extends C2>) valueFunction);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <C1, C2, V extends C2> V putIfAbsent(ConcurrentHashMap<C1, C2> map, Key<?> key, V value) {
+        return (V) map.putIfAbsent((C1) key, value);
     }
 
     private ConcurrentHashMap<String, Key<Object>> getKeyIdentifiers() {
@@ -77,16 +86,12 @@ public final class TypesafeMap {
 
         @Override
         public int hashCode() {
-            return (int) (this.uniqueId ^ (this.uniqueId >>> 32));
+            return Long.hashCode(this.uniqueId);
         }
 
         @Override
         public boolean equals(Object obj) {
-            try {
-                return this.uniqueId == ((Key) obj).uniqueId;
-            } catch (ClassCastException cc) {
-                return false;
-            }
+            return obj instanceof Key<?> key && this.uniqueId == key.uniqueId;
         }
 
         @Override

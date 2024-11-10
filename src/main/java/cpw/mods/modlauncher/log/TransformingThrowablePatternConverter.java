@@ -85,7 +85,6 @@ public class TransformingThrowablePatternConverter extends ThrowablePatternConve
             for (var line : audit.get(cls))
                 line(buf, "    ", line);
         }
-        System.currentTimeMillis();
     }
 
     private void line(StringBuilder sb, String... parts) {

@@ -11,6 +11,7 @@ import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Environment implementation class
@@ -52,5 +53,10 @@ public final class Environment implements IEnvironment {
     @Override
     public <T> T computePropertyIfAbsent(final TypesafeMap.Key<T> key, final Function<? super TypesafeMap.Key<T>, ? extends T> valueFunction) {
         return environment.computeIfAbsent(key, valueFunction);
+    }
+
+    @Override
+    public <T> T putPropertyIfAbsent(final TypesafeMap.Key<T> key, final T value) {
+        return environment.putIfAbsent(key, value);
     }
 }

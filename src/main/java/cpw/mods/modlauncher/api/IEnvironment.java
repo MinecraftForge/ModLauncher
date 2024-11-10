@@ -28,11 +28,35 @@ public interface IEnvironment {
      * Compute a new value for insertion into the environment, if not already present.
      *
      * @param key to insert
-     * @param valueFunction the supplier of a value
+     * @param valueFunction the function to compute a value
      * @param <T> Type of key
      * @return The value of the key
      */
     <T> T computePropertyIfAbsent(TypesafeMap.Key<T> key, final Function<? super TypesafeMap.Key<T>, ? extends T> valueFunction);
+
+    /**
+     * Compute a new value for insertion into the environment, if not already present.
+     *
+     * @param key to insert
+     * @param valueSupplier the supplier of a value
+     * @param <T> Type of key
+     * @return The value of the key
+     */
+    default <T> T computePropertyIfAbsent(TypesafeMap.Key<T> key, final Supplier<? extends T> valueSupplier) {
+        return computePropertyIfAbsent(key, k -> valueSupplier.get());
+    }
+
+    /**
+     * Insert a value into the environment if not already present.
+     * @param key to insert
+     * @param value the value to insert
+     * @return The value of the key
+     * @param <T> Type of key
+     */
+    default <T> T putPropertyIfAbsent(TypesafeMap.Key<T> key, T value) {
+        return computePropertyIfAbsent(key, k -> value);
+    }
+
     /**
      * Find the named {@link ILaunchPluginService}
      *

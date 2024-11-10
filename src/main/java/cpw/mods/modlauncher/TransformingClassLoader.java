@@ -23,7 +23,11 @@ public class TransformingClassLoader extends ModuleClassLoader {
     private final ClassTransformer classTransformer;
 
     private static ModuleLayer get(ModuleLayerHandler layers, Layer layer) {
-        return layers.getLayer(layer).orElseThrow(() -> new NullPointerException("Failed to find " + layer.name() + " layer"));
+        var moduleLayer = layers.getLayer(layer).orElse(null);
+        if (moduleLayer == null)
+            throw new NullPointerException("Failed to find " + layer.name() + " layer");
+
+        return moduleLayer;
     }
 
     public TransformingClassLoader(TransformStore transformStore, LaunchPluginHandler pluginHandler, ModuleLayerHandler layers) {
@@ -35,7 +39,7 @@ public class TransformingClassLoader extends ModuleClassLoader {
             TransformStore transformStore, LaunchPluginHandler pluginHandler, Environment environment) {
         super(name, parent, config, parentLayers, parentLoaders, true);
         TransformerAuditTrail tat = new TransformerAuditTrail();
-        environment.computePropertyIfAbsent(IEnvironment.Keys.AUDITTRAIL.get(), v->tat);
+        environment.putPropertyIfAbsent(IEnvironment.Keys.AUDITTRAIL.get(), tat);
         this.classTransformer = new ClassTransformer(transformStore, pluginHandler, this, tat);
     }
 

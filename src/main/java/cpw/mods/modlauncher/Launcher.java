@@ -45,15 +45,15 @@ public class Launcher {
 
     private Launcher() {
         INSTANCE = this;
-        LOGGER.info(MODLAUNCHER,"ModLauncher {} starting: java version {} by {}; OS {} arch {} version {}", ()->IEnvironment.class.getPackage().getImplementationVersion(),  () -> System.getProperty("java.version"), ()->System.getProperty("java.vendor"), ()->System.getProperty("os.name"), ()->System.getProperty("os.arch"), ()->System.getProperty("os.version"));
+        LOGGER.info(MODLAUNCHER,"ModLauncher {} starting: java version {} by {}; OS {} arch {} version {}", IEnvironment.class.getPackage().getImplementationVersion(),  System.getProperty("java.version"), System.getProperty("java.vendor"), System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
         this.moduleLayerHandler = new ModuleLayerHandler();
         this.launchService = new LaunchServiceHandler(this.moduleLayerHandler);
         this.blackboard = new TypesafeMap();
         this.environment = new Environment(this);
-        environment.computePropertyIfAbsent(IEnvironment.Keys.MLSPEC_VERSION.get(), s->IEnvironment.class.getPackage().getSpecificationVersion());
-        environment.computePropertyIfAbsent(IEnvironment.Keys.MLIMPL_VERSION.get(), s->IEnvironment.class.getPackage().getImplementationVersion());
-        environment.computePropertyIfAbsent(IEnvironment.Keys.MODLIST.get(), s->new ArrayList<>());
-        environment.computePropertyIfAbsent(IEnvironment.Keys.SECURED_JARS_ENABLED.get(), k-> ProtectionDomainHelper.canHandleSecuredJars());
+        environment.putPropertyIfAbsent(IEnvironment.Keys.MLSPEC_VERSION.get(), IEnvironment.class.getPackage().getSpecificationVersion());
+        environment.putPropertyIfAbsent(IEnvironment.Keys.MLIMPL_VERSION.get(), IEnvironment.class.getPackage().getImplementationVersion());
+        environment.computePropertyIfAbsent(IEnvironment.Keys.MODLIST.get(), k -> new ArrayList<>());
+        environment.putPropertyIfAbsent(IEnvironment.Keys.SECURED_JARS_ENABLED.get(), ProtectionDomainHelper.canHandleSecuredJars());
         this.transformStore = new TransformStore();
         this.transformationServicesHandler = new TransformationServicesHandler(this.transformStore, this.moduleLayerHandler);
         this.argumentHandler = new ArgumentHandler();
@@ -70,7 +70,7 @@ public class Launcher {
             JVM information: %s %s %s
             """, props.getProperty("java.vm.vendor"), props.getProperty("java.vm.name"), props.getProperty("java.vm.version"));
         }
-        LOGGER.info(MODLAUNCHER,"ModLauncher running: args {}", () -> LaunchServiceHandler.hideAccessToken(args));
+        LOGGER.info(MODLAUNCHER,"ModLauncher running: args {}", LaunchServiceHandler.hideAccessToken(args));
         LOGGER.info(MODLAUNCHER, "JVM identified as {} {} {}", props.getProperty("java.vm.vendor"), props.getProperty("java.vm.name"), props.getProperty("java.vm.version"));
         new Launcher().run(args);
     }

@@ -14,23 +14,29 @@ import org.objectweb.asm.Opcodes;
 public class PredicateVisitor extends ClassVisitor {
     private static final int ASM_API = Opcodes.ASM9;
     
-    private ITransformerVotingContext.MethodPredicate methodPredicate;
-    private ITransformerVotingContext.FieldPredicate fieldPredicate;
-    private ITransformerVotingContext.ClassPredicate classPredicate;
+    private final ITransformerVotingContext.MethodPredicate methodPredicate;
+    private final ITransformerVotingContext.FieldPredicate fieldPredicate;
+    private final ITransformerVotingContext.ClassPredicate classPredicate;
     private boolean result;
 
     PredicateVisitor(final ITransformerVotingContext.FieldPredicate fieldPredicate) {
         super(ASM_API);
+        this.methodPredicate = null;
         this.fieldPredicate = fieldPredicate;
+        this.classPredicate = null;
     }
 
     PredicateVisitor(final ITransformerVotingContext.MethodPredicate methodPredicate) {
         super(ASM_API);
         this.methodPredicate = methodPredicate;
+        this.fieldPredicate = null;
+        this.classPredicate = null;
     }
 
     PredicateVisitor(final ITransformerVotingContext.ClassPredicate classPredicate) {
         super(ASM_API);
+        this.methodPredicate = null;
+        this.fieldPredicate = null;
         this.classPredicate = classPredicate;
     }
 

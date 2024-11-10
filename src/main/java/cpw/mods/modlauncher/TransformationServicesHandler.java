@@ -27,7 +27,7 @@ import java.util.function.BiFunction;
 
 import static cpw.mods.modlauncher.LogMarkers.*;
 
-class TransformationServicesHandler {
+final class TransformationServicesHandler {
     private static final Logger LOGGER = LogManager.getLogger();
     private Map<String, TransformationServiceDecorator> serviceLookup;
     private final TransformStore transformStore;
@@ -44,7 +44,7 @@ class TransformationServicesHandler {
         processArguments(argumentHandler, environment);
         initialiseTransformationServices(environment);
         // force the naming to "mojang" if nothing has been populated during transformer setup
-        environment.computePropertyIfAbsent(IEnvironment.Keys.NAMING.get(), a-> "mojang");
+        environment.putPropertyIfAbsent(IEnvironment.Keys.NAMING.get(), "mojang");
         nameMappingServiceHandler.bindNamingServices(environment.getProperty(Environment.Keys.NAMING.get()).orElse("mojang"));
         return runScanningTransformationServices(environment);
     }
@@ -79,13 +79,17 @@ class TransformationServicesHandler {
     void initialiseServiceTransformers() {
         LOGGER.debug(MODLAUNCHER,"Transformation services loading transformers");
 
-        serviceLookup.values().forEach(s -> s.gatherTransformers(transformStore));
+        for (TransformationServiceDecorator s : serviceLookup.values()) {
+            s.gatherTransformers(transformStore);
+        }
     }
 
     private void initialiseTransformationServices(Environment environment) {
         LOGGER.debug(MODLAUNCHER,"Transformation services initializing");
 
-        serviceLookup.values().forEach(s -> s.onInitialize(environment));
+        for (TransformationServiceDecorator s : serviceLookup.values()) {
+            s.onInitialize(environment);
+        }
     }
 
     private List<ITransformationService.Resource> runScanningTransformationServices(Environment environment) {
@@ -94,7 +98,7 @@ class TransformationServicesHandler {
         return serviceLookup.values()
                 .stream()
                 .map(s -> s.runScan(environment))
-                .<ITransformationService.Resource>mapMulti(Iterable::forEach)
+                .flatMap(List::stream)
                 .toList();
     }
 
@@ -113,7 +117,9 @@ class TransformationServicesHandler {
 
     private void loadTransformationServices(Environment environment) {
         LOGGER.debug(MODLAUNCHER,"Transformation services loading");
-        serviceLookup.values().forEach(s -> s.onLoad(environment, serviceLookup.keySet()));
+        for (TransformationServiceDecorator s : serviceLookup.values()) {
+            s.onLoad(environment, serviceLookup.keySet());
+        }
     }
 
     void discoverServices(final ArgumentHandler.DiscoveryData discoveryData) {
@@ -168,8 +174,8 @@ class TransformationServicesHandler {
 
     public List<ITransformationService.Resource> triggerScanCompletion(IModuleLayerManager moduleLayerManager) {
         return serviceLookup.values().stream()
-                .map(tsd->tsd.onCompleteScan(moduleLayerManager))
-                .<ITransformationService.Resource>mapMulti(Iterable::forEach)
+                .map(tsd -> tsd.onCompleteScan(moduleLayerManager))
+                .flatMap(List::stream)
                 .toList();
 
     }

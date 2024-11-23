@@ -26,7 +26,6 @@ module cpw.mods.modlauncher {
 
     uses cpw.mods.modlauncher.api.ILaunchHandlerService;
     provides cpw.mods.modlauncher.api.ILaunchHandlerService with
-            cpw.mods.modlauncher.DefaultLaunchHandlerService,
             cpw.mods.modlauncher.TestingLaunchHandlerService;
 
     requires net.minecraftforge.bootstrap.api;

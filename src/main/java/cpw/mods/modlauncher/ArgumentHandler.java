@@ -6,6 +6,7 @@
 package cpw.mods.modlauncher;
 
 import cpw.mods.modlauncher.api.*;
+import cpw.mods.modlauncher.internal.GuardedOptionResult;
 import joptsimple.*;
 import joptsimple.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -86,25 +87,7 @@ public final class ArgumentHandler {
     }
 
     private static ITransformationService.OptionResult optionResults(String serviceName, OptionSet set) {
-        return new ITransformationService.OptionResult() {
-            @Override
-            public <V> V value(OptionSpec<V> option) {
-                checkOwnership(option);
-                return set.valueOf(option);
-            }
-
-            @Override
-            public <V> @NotNull List<V> values(OptionSpec<V> option) {
-                checkOwnership(option);
-                return set.valuesOf(option);
-            }
-
-            private <V> void checkOwnership(OptionSpec<V> option) {
-                if (!(option.options().stream().allMatch(opt -> opt.startsWith(serviceName + ".") || !opt.contains(".")))) {
-                    throw new IllegalArgumentException("Cannot process non-arguments");
-                }
-            }
-        };
+        return new GuardedOptionResult(serviceName, set);
     }
 
     public String[] buildArgumentList() {

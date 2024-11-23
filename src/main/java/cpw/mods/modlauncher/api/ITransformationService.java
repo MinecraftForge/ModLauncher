@@ -6,6 +6,8 @@
 package cpw.mods.modlauncher.api;
 
 import cpw.mods.jarhandling.SecureJar;
+import cpw.mods.modlauncher.ArgumentHandler;
+import cpw.mods.modlauncher.internal.GuardedOptionResult;
 import joptsimple.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,11 +42,13 @@ public interface ITransformationService {
      *
      * @param argumentBuilder a function mapping name, description to a set of JOptSimple properties for that argument
      */
-    default void arguments(BiFunction<String, String, OptionSpecBuilder> argumentBuilder) {
-    }
+    default void arguments(BiFunction<String, String, OptionSpecBuilder> argumentBuilder) {}
 
-    default void argumentValues(OptionResult option) {
-    }
+    /**
+     * Access the values of your arguments defined in {@link #arguments(BiFunction)}
+     * @param option The result view of the parsed arguments
+     */
+    default void argumentValues(OptionResult option) {}
 
     /**
      * Initialize your service.
@@ -90,9 +94,20 @@ public interface ITransformationService {
     @NotNull
     List<ITransformer> transformers();
 
-    interface OptionResult {
-        <V> V value(OptionSpec<V> options);
+    /**
+     * A guarded partial view of {@link OptionSet} that only allows access to options intended for your service
+     * @see ITransformationService#arguments(BiFunction)
+     * @see ITransformationService#argumentValues(OptionResult)
+     */
+    sealed interface OptionResult permits GuardedOptionResult {
+        /**
+         * @see OptionSet#valueOf(OptionSpec)
+         */
+        <V> V value(OptionSpec<V> option);
 
+        /**
+         * @see OptionSet#valuesOf(OptionSpec)
+         */
         @NotNull
         <V> List<V> values(OptionSpec<V> options);
     }

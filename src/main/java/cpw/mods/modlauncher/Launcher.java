@@ -32,7 +32,7 @@ import static cpw.mods.modlauncher.LogMarkers.*;
 public class Launcher {
     public static Launcher INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
-    private final TypesafeMap blackboard;
+    private static final TypesafeMap BLACKBOARD = new TypesafeMap();
     private final TransformationServicesHandler transformationServicesHandler;
     private final Environment environment;
     private final TransformStore transformStore;
@@ -48,7 +48,6 @@ public class Launcher {
         LOGGER.info(MODLAUNCHER,"ModLauncher {} starting: java version {} by {}; OS {} arch {} version {}", IEnvironment.class.getPackage().getImplementationVersion(),  System.getProperty("java.version"), System.getProperty("java.vendor"), System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
         this.moduleLayerHandler = new ModuleLayerHandler();
         this.launchService = new LaunchServiceHandler(this.moduleLayerHandler);
-        this.blackboard = new TypesafeMap();
         this.environment = new Environment(this);
         environment.putPropertyIfAbsent(IEnvironment.Keys.MLSPEC_VERSION.get(), IEnvironment.class.getPackage().getSpecificationVersion());
         environment.putPropertyIfAbsent(IEnvironment.Keys.MLIMPL_VERSION.get(), IEnvironment.class.getPackage().getImplementationVersion());
@@ -76,7 +75,7 @@ public class Launcher {
     }
 
     public final TypesafeMap blackboard() {
-        return blackboard;
+        return BLACKBOARD;
     }
 
     private void run(String... args) {

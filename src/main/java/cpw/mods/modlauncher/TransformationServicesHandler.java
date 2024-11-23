@@ -49,7 +49,7 @@ final class TransformationServicesHandler {
         return runScanningTransformationServices(environment);
     }
 
-    TransformingClassLoader buildTransformingClassLoader(LaunchPluginHandler pluginHandler, TransformingClassLoaderBuilder builder, Environment environment, ModuleLayerHandler layerHandler) {
+    TransformingClassLoader buildTransformingClassLoader(LaunchPluginHandler pluginHandler, Environment environment, ModuleLayerHandler layerHandler) {
         return (TransformingClassLoader)layerHandler.build(Layer.GAME,
             (cfg, layers, loaders) -> new TransformingClassLoader(
                 "TRANSFORMER", null, cfg, layers, loaders,

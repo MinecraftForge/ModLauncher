@@ -78,13 +78,6 @@ final class LaunchServiceHandler {
         launch(launchTarget, args, gameLayer, classLoader, launchPluginHandler);
     }
 
-    TransformingClassLoaderBuilder identifyTransformationTargets(final ArgumentHandler argumentHandler) {
-        var builder = new TransformingClassLoaderBuilder();
-        for (var path : argumentHandler.getSpecialJars())
-            builder.addTransformationPath(path);
-        return builder;
-    }
-
     void validateLaunchTarget(final ArgumentHandler argumentHandler) {
         var target = argumentHandler.getLaunchTarget();
         if (!handlers.containsKey(target)) {

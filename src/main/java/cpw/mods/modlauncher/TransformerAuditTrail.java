@@ -38,6 +38,7 @@ public class TransformerAuditTrail implements ITransformerAuditTrail {
             return type;
         }
 
+        @Override
         public String getActivityString() {
             return this.type.getLabel() + ":" + String.join(":", this.context);
         }

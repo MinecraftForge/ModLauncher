@@ -77,7 +77,7 @@ public class MockTransformerService implements ITransformationService {
 
         var ret = new ArrayList<SecureJar>();
         for (var strings : harness.split(",")) {
-            var paths = Arrays.stream(strings.split("\0")).map(p -> Path.of(p)).toArray(Path[]::new);
+            var paths = Arrays.stream(strings.split("\0")).map(Path::of).toArray(Path[]::new);
             var jar = SecureJar.from(paths);
             ret.add(jar);
         }

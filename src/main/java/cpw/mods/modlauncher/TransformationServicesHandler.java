@@ -127,22 +127,21 @@ final class TransformationServicesHandler {
         var bootLayer = layerHandler.getLayer(Layer.BOOT).orElseThrow();
 
         var discovery = new ArrayList<ITransformerDiscoveryService>();
-        for (var itr = ServiceLoader.load(bootLayer, ITransformerDiscoveryService.class).iterator(); itr.hasNext(); ) {
-            try {
-                var srvc = itr.next();
-                discovery.add(srvc);
-                var paths = srvc.candidates(discoveryData.gameDir(), discoveryData.launchTarget());
+        try {
+            for (var service : ServiceLoader.load(bootLayer, ITransformerDiscoveryService.class)) {
+                discovery.add(service);
+                var paths = service.candidates(discoveryData.gameDir(), discoveryData.launchTarget());
 
                 if (!paths.isEmpty()) {
-                    LOGGER.debug(MODLAUNCHER, "Found additional transformation services from discovery service: {}", srvc.getClass().getName());
+                    LOGGER.debug(MODLAUNCHER, "Found additional transformation services from discovery service: {}", service.getClass().getName());
                     for (var path : paths) {
                         LOGGER.debug(MODLAUNCHER, "\t{}", path.toString());
                         layerHandler.addToLayer(Layer.SERVICE, SecureJar.from(path.paths()));
                     }
                 }
-            } catch (ServiceConfigurationError sce) {
-                LOGGER.fatal("Encountered serious error loading transformation discoverer service, expect problems", sce);
             }
+        } catch (ServiceConfigurationError e) {
+            throw new RuntimeException("Encountered serious error loading transformation discoverer service", e);
         }
 
         var serviceLayer = layerHandler.build(Layer.SERVICE).layer();
@@ -151,24 +150,24 @@ final class TransformationServicesHandler {
 
         var transformers = new HashMap<String, TransformationServiceDecorator>();
         var modlist = Launcher.INSTANCE.environment().getProperty(IEnvironment.Keys.MODLIST.get());
-        for (var itr = ServiceLoader.load(serviceLayer, ITransformationService.class).iterator(); itr.hasNext(); ) {
-            try {
-                var srvc = itr.next();
-                transformers.put(srvc.name(), new TransformationServiceDecorator(srvc));
+        try {
+            for (var service : ServiceLoader.load(serviceLayer, ITransformationService.class)) {
+                transformers.put(service.name(), new TransformationServiceDecorator(service));
                 @SuppressWarnings("removal")
-                var file = cpw.mods.modlauncher.util.ServiceLoaderUtils.fileNameFor(srvc.getClass());
-                LOGGER.debug(MODLAUNCHER, "Found transformer service: {}: {}", srvc.name(), file);
+                var file = cpw.mods.modlauncher.util.ServiceLoaderUtils.fileNameFor(service.getClass());
+                LOGGER.debug(MODLAUNCHER, "Found transformer service: {}: {}", service.name(), file);
                 if (modlist.isPresent()) {
                     modlist.get().add(Map.of(
-                        "name", srvc.name(),
+                        "name", service.name(),
                         "type", "TRANSFORMATIONSERVICE",
                         "file", file
                     ));
                 }
-            } catch (ServiceConfigurationError sce) {
-                LOGGER.fatal(MODLAUNCHER, "Encountered serious error loading transformation service, expect problems", sce);
             }
+        } catch (ServiceConfigurationError e) {
+            throw new RuntimeException("Encountered serious error loading transformation service", e);
         }
+
         serviceLookup = transformers;
     }
 

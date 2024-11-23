@@ -39,22 +39,19 @@ public class LaunchPluginHandler {
             .getProperty(IEnvironment.Keys.MODLIST.get())
             .orElseThrow(() -> new IllegalStateException("Invalid environment, Missing MODLIST"));
 
-        for (var itr = ServiceLoader.load(boot, ILaunchPluginService.class).iterator(); itr.hasNext(); ) {
-            try {
-                var srvc = itr.next();
-                @SuppressWarnings("removal")
-                var file = cpw.mods.modlauncher.util.ServiceLoaderUtils.fileNameFor(srvc.getClass());
-                plugins.put(srvc.name(), srvc);
+        try {
+            for (var service : ServiceLoader.load(boot, ILaunchPluginService.class)) {
+                plugins.put(service.name(), service);
                 if (modlist != null) {
                     modlist.add(Map.of(
-                        "name", srvc.name(),
+                        "name", service.name(),
                         "type", "PLUGINSERVICE",
-                        "file", file
+                        "file", cpw.mods.modlauncher.util.ServiceLoaderUtils.fileNameFor(service.getClass())
                     ));
                 }
-            } catch (ServiceConfigurationError e) {
-                LOGGER.fatal(MODLAUNCHER, "Encountered serious error loading launch plugin service. Things will not work well", e);
             }
+        } catch (ServiceConfigurationError e) {
+            throw new RuntimeException("Encountered serious error loading launch plugin service", e);
         }
 
         LOGGER.debug(MODLAUNCHER, "Found launch plugins: [{}]", () -> String.join(",", plugins.keySet()));

@@ -35,13 +35,12 @@ final class LaunchServiceHandler {
 
     public LaunchServiceHandler(ModuleLayerHandler layerHandler) {
         var services = ServiceLoader.load(layerHandler.getLayer(Layer.BOOT).orElseThrow(), ILaunchHandlerService.class);
-        for (var loader = services.iterator(); loader.hasNext(); ) {
-            try {
-                var srvc  = loader.next();
-                handlers.put(srvc.name(), srvc);
-            } catch (ServiceConfigurationError sce) {
-                LOGGER.fatal("Encountered serious error loading transformation service, expect problems", sce);
+        try {
+            for (var service : services) {
+                handlers.put(service.name(), service);
             }
+        } catch (ServiceConfigurationError e) {
+            throw new RuntimeException("Encountered serious error loading transformation service", e);
         }
         LOGGER.debug(MODLAUNCHER, "Found launch services [{}]", () -> String.join(",", handlers.keySet()));
     }

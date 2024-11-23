@@ -48,7 +48,6 @@ configurations.all {
 
 extraJavaModuleInfo {
     failOnMissingModuleInfo = false
-    automaticModule('net.sf.jopt-simple:jopt-simple', 'jopt.simple')
 }
 
 license {

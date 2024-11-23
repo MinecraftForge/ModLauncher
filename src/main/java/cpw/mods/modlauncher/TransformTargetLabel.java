@@ -123,18 +123,5 @@ public final class TransformTargetLabel {
         public <T> Supplier<TransformList<T>> mapSupplier(EnumMap<LabelType, TransformList<?>> transformers) {
             return () -> (TransformList<T>) transformers.get(this);
         }
-
-        /**
-         * Only here for backwards compatibility with < 10.0, Nobody should ever use this.
-         */
-        @Deprecated(forRemoval = true, since = "10.0")
-        public static List<LabelType> getTypeFor(java.lang.reflect.Type type) {
-            switch (type.getTypeName()) {
-                case "org.objectweb.asm.tree.FieldNode": return List.of(FIELD);
-                case "org.objectweb.asm.tree.MethodNode": return List.of(METHOD);
-                case "org.objectweb.asm.tree.ClassNode": return List.of(CLASS, PRE_CLASS);
-            }
-            return Collections.emptyList();
-        }
     }
 }

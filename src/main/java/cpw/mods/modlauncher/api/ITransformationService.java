@@ -90,18 +90,6 @@ public interface ITransformationService {
     @NotNull
     List<ITransformer> transformers();
 
-    /** Hasn't been called in ages, will be removed in next breaking bump */
-    @Deprecated(forRemoval = true, since = "10.1")
-    default Map.Entry<Set<String>,Supplier<Function<String, Optional<URL>>>> additionalClassesLocator() {
-        return null;
-    }
-
-    /** Hasn't been called in ages, will be removed in next breaking bump */
-    @Deprecated(forRemoval = true, since = "10.1")
-    default Map.Entry<Set<String>,Supplier<Function<String, Optional<URL>>>> additionalResourcesLocator() {
-        return null;
-    }
-
     interface OptionResult {
         <V> V value(OptionSpec<V> options);
 

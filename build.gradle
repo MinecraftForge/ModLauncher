@@ -11,7 +11,7 @@ plugins {
 }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(16)
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
     withSourcesJar()
 }
 
@@ -133,15 +133,15 @@ eclipse.classpath {
 
 allprojects {
     ext.VALID_VMS = [
-        'Adoptium':  [16, 17, 18, 19, 20, 21],
-        'Amazon':    [16, 17, 18, 19, 20, 21],
-        'Azul':      (16..21),
-        'BellSoft':  (16..21),
-        'Graal_VM':  [16, 17,     19, 20, 21],
-        'IBM':       [16, 17, 18, 19, 20    ],
-        'Microsoft': [16, 17,             21],
-        'Oracle':    (16..21),
-        'SAP':       (16..20)
+        'Adoptium':  (21..23),
+        'Amazon':    (21..23),
+        'Azul':      (21..23),
+        'BellSoft':  (21..23),
+        'Graal_VM':  [21, 23],
+//        'IBM':       [16, 17, 18, 19, 20    ],
+        'Microsoft': [21],
+        'Oracle':    (21..23),
+//        'SAP':       (16..20)
     ]
     //ext.VALID_VMS = [ 'Adoptium':  [16] ]
 }

@@ -78,13 +78,13 @@ record VotingContext(
     }
 
     private static Object[] toObjectArray(final AbstractInsnNode insnNode) {
-        if (insnNode instanceof MethodInsnNode methodInsnNode) {
-            return new Object[] {methodInsnNode.name, methodInsnNode.desc, methodInsnNode.owner, methodInsnNode.itf};
-        }
-        if (insnNode instanceof FieldInsnNode fieldInsnNode) {
-            return new Object[] {fieldInsnNode.name, fieldInsnNode.desc, fieldInsnNode.owner};
-        }
-        return EMPTY;
+        return switch (insnNode) {
+            case MethodInsnNode methodInsnNode ->
+                    new Object[] { methodInsnNode.name, methodInsnNode.desc, methodInsnNode.owner, methodInsnNode.itf };
+            case FieldInsnNode fieldInsnNode ->
+                    new Object[] { fieldInsnNode.name, fieldInsnNode.desc, fieldInsnNode.owner };
+            default -> EMPTY;
+        };
     }
 
     private static final class NodeHolder {

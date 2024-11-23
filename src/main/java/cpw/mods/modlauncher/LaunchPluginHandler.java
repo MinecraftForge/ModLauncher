@@ -86,7 +86,7 @@ public class LaunchPluginHandler {
         int flags = 0;
         for (var plugin : plugins) {
             LOGGER.debug(LAUNCHPLUGIN, "LauncherPluginService {} offering transform {}", plugin.name(), className.getClassName());
-            var pluginFlags = plugin.processClassWithFlags(phase, node, className, reason);
+            int pluginFlags = plugin.processClassWithFlags(phase, node, className, reason);
             if (pluginFlags != ILaunchPluginService.ComputeFlags.NO_REWRITE) {
                 auditTrail.addPluginAuditTrail(className.getClassName(), plugin, phase);
                 LOGGER.debug(LAUNCHPLUGIN, "LauncherPluginService {} transformed {} with class compute flags {}", plugin.name(), className.getClassName(), pluginFlags);

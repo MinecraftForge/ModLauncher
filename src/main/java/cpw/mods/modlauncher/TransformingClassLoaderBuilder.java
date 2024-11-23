@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
-import static cpw.mods.modlauncher.api.LamdbaExceptionUtils.rethrowFunction;
+import static cpw.mods.modlauncher.api.LambdaExceptionUtils.rethrowFunction;
 
 final class TransformingClassLoaderBuilder implements ITransformingClassLoaderBuilder {
     private final List<Path> transformationPaths = new ArrayList<>();

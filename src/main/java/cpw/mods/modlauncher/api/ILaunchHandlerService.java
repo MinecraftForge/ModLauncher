@@ -11,9 +11,6 @@ package cpw.mods.modlauncher.api;
 public interface ILaunchHandlerService {
     String name();
 
-    @Deprecated(forRemoval = true, since = "10.0")
-    default void configureTransformationClassLoader(final ITransformingClassLoaderBuilder builder) {}
-
     void launchService(String[] arguments, ModuleLayer gameLayer);
 
     default NamedPath[] getPaths() { return new NamedPath[0]; }

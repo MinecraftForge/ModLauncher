@@ -23,14 +23,8 @@ public interface IModuleLayerManager {
             this.parents = List.of(parent);
         }
 
-        Layer(Layer... parent) {
-            this.parents = List.of(parent);
-        }
-
-        /** Returning a raw array is unsafe, it used to return the backing array directly which would allow others to screw with it. */
-        @Deprecated(forRemoval = true, since = "10.1")
-        public Layer[] getParent() {
-            return this.parents.toArray(Layer[]::new);
+        Layer(Layer... parents) {
+            this.parents = List.of(parents);
         }
 
         /** Returns a potentially empty, immutable list of parent layers. */

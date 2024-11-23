@@ -37,7 +37,6 @@ public class Launcher {
     private final Environment environment;
     private final TransformStore transformStore;
     private final NameMappingServiceHandler nameMappingServiceHandler;
-    private final ArgumentHandler argumentHandler;
     private final LaunchServiceHandler launchService;
     private final LaunchPluginHandler launchPlugins;
     private final ModuleLayerHandler moduleLayerHandler;
@@ -55,7 +54,6 @@ public class Launcher {
         environment.putPropertyIfAbsent(IEnvironment.Keys.SECURED_JARS_ENABLED.get(), ProtectionDomainHelper.canHandleSecuredJars());
         this.transformStore = new TransformStore();
         this.transformationServicesHandler = new TransformationServicesHandler(this.transformStore, this.moduleLayerHandler);
-        this.argumentHandler = new ArgumentHandler();
         this.nameMappingServiceHandler = new NameMappingServiceHandler(this.moduleLayerHandler);
         this.launchPlugins = new LaunchPluginHandler(this.moduleLayerHandler);
     }
@@ -79,8 +77,8 @@ public class Launcher {
     }
 
     private void run(String... args) {
-        var discoveryData = argumentHandler.setArgs(args);
-        transformationServicesHandler.discoverServices(discoveryData);
+        var argumentHandler = new ArgumentHandler(args);
+        transformationServicesHandler.discoverServices(argumentHandler.getDiscoveryData());
 
         var scanResults = new EnumMap<Layer, List<Resource>>(Layer.class);
 
@@ -106,13 +104,13 @@ public class Launcher {
 
         this.transformationServicesHandler.initialiseServiceTransformers();
         this.launchPlugins.offerScanResultsToPlugins(gameContents);
-        this.launchService.validateLaunchTarget(this.argumentHandler);
-        var classLoaderBuilder = this.launchService.identifyTransformationTargets(this.argumentHandler);
+        this.launchService.validateLaunchTarget(argumentHandler);
+        var classLoaderBuilder = this.launchService.identifyTransformationTargets(argumentHandler);
         this.classLoader = this.transformationServicesHandler.buildTransformingClassLoader(this.launchPlugins, classLoaderBuilder, this.environment, this.moduleLayerHandler);
         var oldCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(this.classLoader);
-            this.launchService.launch(this.argumentHandler, this.moduleLayerHandler.getLayer(Layer.GAME).orElseThrow(), this.classLoader, this.launchPlugins);
+            this.launchService.launch(argumentHandler, this.moduleLayerHandler.getLayer(Layer.GAME).orElseThrow(), this.classLoader, this.launchPlugins);
         } finally {
             Thread.currentThread().setContextClassLoader(oldCL);
         }

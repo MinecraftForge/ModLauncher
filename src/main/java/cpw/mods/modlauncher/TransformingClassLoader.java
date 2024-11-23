@@ -5,10 +5,10 @@
 
 package cpw.mods.modlauncher;
 
-import cpw.mods.cl.ModuleClassLoader;
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.ITransformerActivity;
 import cpw.mods.modlauncher.api.IModuleLayerManager.Layer;
+import net.minecraftforge.securemodules.SecureModuleClassLoader;
 
 import java.lang.module.Configuration;
 import java.util.*;
@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * Module transforming class loader
  */
-public class TransformingClassLoader extends ModuleClassLoader {
+public class TransformingClassLoader extends SecureModuleClassLoader {
     static {
         ClassLoader.registerAsParallelCapable();
     }
@@ -31,7 +31,7 @@ public class TransformingClassLoader extends ModuleClassLoader {
     }
 
     public TransformingClassLoader(TransformStore transformStore, LaunchPluginHandler pluginHandler, ModuleLayerHandler layers) {
-        super("TRANSFORMER", get(layers, Layer.GAME).configuration(), List.of(get(layers, Layer.SERVICE)));
+        super("TRANSFORMER", null, get(layers, Layer.GAME).configuration(), List.of(get(layers, Layer.SERVICE)), List.of(), true);
         this.classTransformer = new ClassTransformer(transformStore, pluginHandler, this);
     }
 

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+// TODO: [ML} Check if this is still needed
 /**
  * Started as a copy of {@link org.apache.logging.log4j.core.pattern.ExtendedThrowablePatternConverter} because
  * there is no mechanism to hook additional data into that class, which is very rubbish.

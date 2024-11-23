@@ -9,7 +9,6 @@ import cpw.mods.modlauncher.api.*;
 import cpw.mods.modlauncher.internal.GuardedOptionResult;
 import joptsimple.*;
 import joptsimple.util.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.*;
 import java.util.*;
@@ -32,12 +31,6 @@ public final class ArgumentHandler {
             .accepts("assetsDir", "Assets directory")
             .withRequiredArg()
             .withValuesConvertedBy(new PathConverter(PathProperties.DIRECTORY_EXISTING));
-
-    private static final OptionSpec<Path> MINECRAFT_JAR_OPTION = PARSER
-            .accepts("minecraftJar", "Path to minecraft jar")
-            .withRequiredArg()
-            .withValuesConvertedBy(new PathConverter(PathProperties.READABLE))
-            .withValuesSeparatedBy(',');
 
     private static final OptionSpec<String> LAUNCH_TARGET_OPTION = PARSER
             .accepts("launchTarget", "LauncherService target to launch")
@@ -76,10 +69,6 @@ public final class ArgumentHandler {
         env.computePropertyIfAbsent(IEnvironment.Keys.LAUNCHTARGET.get(), f -> this.discoveryData.launchTarget);
         env.computePropertyIfAbsent(IEnvironment.Keys.UUID.get(), f -> this.optionSet.valueOf(UUID_OPTION));
         resultConsumer.accept(this.optionSet, ArgumentHandler::optionResults);
-    }
-
-    Path[] getSpecialJars() {
-        return this.optionSet.valuesOf(MINECRAFT_JAR_OPTION).toArray(new Path[0]);
     }
 
     String getLaunchTarget() {

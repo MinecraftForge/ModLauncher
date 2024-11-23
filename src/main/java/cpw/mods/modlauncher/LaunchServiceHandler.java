@@ -52,7 +52,7 @@ final class LaunchServiceHandler {
 
     private void launch(String target, String[] arguments, ModuleLayer gameLayer, TransformingClassLoader classLoader, LaunchPluginHandler launchPluginHandler) {
         var service = handlers.get(target);
-        launchPluginHandler.announceLaunch(classLoader, service.getPaths());
+        launchPluginHandler.announceLaunch(classLoader);
         LOGGER.info(MODLAUNCHER, "Launching target '{}' with arguments {}", target, hideAccessToken(arguments));
 
         try {

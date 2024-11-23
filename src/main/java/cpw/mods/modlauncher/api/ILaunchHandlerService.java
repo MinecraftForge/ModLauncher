@@ -12,6 +12,4 @@ public interface ILaunchHandlerService {
     String name();
 
     void launchService(String[] arguments, ModuleLayer gameLayer);
-
-    default NamedPath[] getPaths() { return new NamedPath[0]; }
 }

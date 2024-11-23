@@ -8,7 +8,6 @@ package cpw.mods.modlauncher;
 import cpw.mods.jarhandling.SecureJar;
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.IModuleLayerManager.Layer;
-import cpw.mods.modlauncher.api.NamedPath;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -101,10 +100,9 @@ public class LaunchPluginHandler {
         return flags;
     }
 
-    @SuppressWarnings("removal")
-    void announceLaunch(final TransformingClassLoader transformerLoader, final NamedPath[] specialPaths) {
+    void announceLaunch(final TransformingClassLoader transformerLoader) {
         plugins.forEach((name, plugin) -> {
-            plugin.initializeLaunch(clazzName -> transformerLoader.buildTransformedClassNodeFor(clazzName, name), specialPaths);
+            plugin.initializeLaunch(clazzName -> transformerLoader.buildTransformedClassNodeFor(clazzName, name));
         });
     }
 }

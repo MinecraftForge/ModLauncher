@@ -19,7 +19,7 @@ import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -82,7 +82,7 @@ public class Launcher {
         var discoveryData = argumentHandler.setArgs(args);
         transformationServicesHandler.discoverServices(discoveryData);
 
-        var scanResults = new HashMap<Layer, List<Resource>>();
+        var scanResults = new EnumMap<Layer, List<Resource>>(Layer.class);
 
         for (var resource : transformationServicesHandler.initializeTransformationServices(argumentHandler, environment, nameMappingServiceHandler))
             scanResults.computeIfAbsent(resource.target(), k -> new ArrayList<>()).add(resource);

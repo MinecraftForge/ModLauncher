@@ -24,7 +24,7 @@ public class TransformerAuditTrail implements ITransformerAuditTrail {
     }
 
     private record TransformerActivity(String[] context, Type type) implements ITransformerActivity {
-        public TransformerActivity(Type type, String... context) {
+        private TransformerActivity(Type type, String... context) {
             this(context, type);
         }
 

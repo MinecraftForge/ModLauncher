@@ -14,7 +14,7 @@ public interface ILaunchHandlerService {
     @Deprecated(forRemoval = true, since = "10.0")
     default void configureTransformationClassLoader(final ITransformingClassLoaderBuilder builder) {}
 
-    ServiceRunner launchService(String[] arguments, ModuleLayer gameLayer);
+    void launchService(String[] arguments, ModuleLayer gameLayer);
 
     default NamedPath[] getPaths() { return new NamedPath[0]; }
 }

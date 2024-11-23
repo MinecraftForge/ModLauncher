@@ -52,29 +52,11 @@ final class LaunchServiceHandler {
 
     private void launch(String target, String[] arguments, ModuleLayer gameLayer, TransformingClassLoader classLoader, LaunchPluginHandler launchPluginHandler) {
         var service = handlers.get(target);
-        var paths = service.getPaths();
-        launchPluginHandler.announceLaunch(classLoader, paths);
+        launchPluginHandler.announceLaunch(classLoader, service.getPaths());
         LOGGER.info(MODLAUNCHER, "Launching target '{}' with arguments {}", target, hideAccessToken(arguments));
 
-        ServiceRunner runner = null;
-
         try {
-            runner = service.launchService(arguments, gameLayer);
-        } catch (AbstractMethodError e) {
-            var lookup = MethodHandles.lookup();
-            var type = MethodType.methodType(Callable.class, String[].class, ModuleLayer.class);
-            try {
-                var virtual = lookup.findVirtual(service.getClass(), "launchService", type);
-                Callable<Void> callable = (Callable<Void>)virtual.invokeExact(arguments, gameLayer);
-                runner = callable::call;
-            } catch (Throwable t) {
-                sneak(t);
-            }
-        }
-
-        try {
-
-            runner.run();
+            service.launchService(arguments, gameLayer);
         } catch (Throwable e) {
             sneak(e);
         }

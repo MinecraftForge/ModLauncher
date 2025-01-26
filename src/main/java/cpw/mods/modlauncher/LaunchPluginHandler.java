@@ -8,7 +8,6 @@ package cpw.mods.modlauncher;
 import cpw.mods.jarhandling.SecureJar;
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.IModuleLayerManager.Layer;
-import cpw.mods.modlauncher.api.NamedPath;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -40,22 +39,19 @@ public class LaunchPluginHandler {
             .getProperty(IEnvironment.Keys.MODLIST.get())
             .orElseThrow(() -> new IllegalStateException("Invalid environment, Missing MODLIST"));
 
-        for (var itr = ServiceLoader.load(boot, ILaunchPluginService.class).iterator(); itr.hasNext(); ) {
-            try {
-                var srvc = itr.next();
-                @SuppressWarnings("removal")
-                var file = cpw.mods.modlauncher.util.ServiceLoaderUtils.fileNameFor(srvc.getClass());
-                plugins.put(srvc.name(), srvc);
+        try {
+            for (var service : ServiceLoader.load(boot, ILaunchPluginService.class)) {
+                plugins.put(service.name(), service);
                 if (modlist != null) {
                     modlist.add(Map.of(
-                        "name", srvc.name(),
+                        "name", service.name(),
                         "type", "PLUGINSERVICE",
-                        "file", file
+                        "file", cpw.mods.modlauncher.util.ServiceLoaderUtils.fileNameFor(service.getClass())
                     ));
                 }
-            } catch (ServiceConfigurationError e) {
-                LOGGER.fatal(MODLAUNCHER, "Encountered serious error loading launch plugin service. Things will not work well", e);
             }
+        } catch (ServiceConfigurationError e) {
+            throw new RuntimeException("Encountered serious error loading launch plugin service", e);
         }
 
         LOGGER.debug(MODLAUNCHER, "Found launch plugins: [{}]", () -> String.join(",", plugins.keySet()));
@@ -90,7 +86,7 @@ public class LaunchPluginHandler {
         int flags = 0;
         for (var plugin : plugins) {
             LOGGER.debug(LAUNCHPLUGIN, "LauncherPluginService {} offering transform {}", plugin.name(), className.getClassName());
-            var pluginFlags = plugin.processClassWithFlags(phase, node, className, reason);
+            int pluginFlags = plugin.processClassWithFlags(phase, node, className, reason);
             if (pluginFlags != ILaunchPluginService.ComputeFlags.NO_REWRITE) {
                 auditTrail.addPluginAuditTrail(className.getClassName(), plugin, phase);
                 LOGGER.debug(LAUNCHPLUGIN, "LauncherPluginService {} transformed {} with class compute flags {}", plugin.name(), className.getClassName(), pluginFlags);
@@ -101,10 +97,9 @@ public class LaunchPluginHandler {
         return flags;
     }
 
-    @SuppressWarnings("removal")
-    void announceLaunch(final TransformingClassLoader transformerLoader, final NamedPath[] specialPaths) {
+    void announceLaunch(final TransformingClassLoader transformerLoader) {
         plugins.forEach((name, plugin) -> {
-            plugin.initializeLaunch(clazzName -> transformerLoader.buildTransformedClassNodeFor(clazzName, name), specialPaths);
+            plugin.initializeLaunch(clazzName -> transformerLoader.buildTransformedClassNodeFor(clazzName, name));
         });
     }
 }

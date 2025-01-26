@@ -164,7 +164,7 @@ public class ClassTransformer {
             // If there's at least one YES voter, let's apply the first one we find, remove them, and continue.
             var yesVotes = results.get(TransformerVoteResult.YES);
             if (yesVotes != null) {
-                final ITransformer<T> transformer = yesVotes.get(0).transformer();
+                final ITransformer<T> transformer = yesVotes.getFirst().transformer();
                 node = transformer.transform(node, context);
                 auditTrail.addTransformerAuditTrail(context.getClassName(), ((TransformerHolder<?>) transformer).owner(), transformer);
                 transformers.remove(transformer);

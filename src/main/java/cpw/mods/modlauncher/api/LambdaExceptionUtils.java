@@ -10,7 +10,7 @@ import java.util.function.*;
 /**
  * From stackoverflow: https://stackoverflow.com/a/27644392
  */
-public class LamdbaExceptionUtils {
+public class LambdaExceptionUtils {
 
     /**
      * .forEach(rethrowConsumer(name -> System.out.println(Class.forName(name)))); or .forEach(rethrowConsumer(ClassNameUtil::println));
@@ -108,6 +108,7 @@ public class LamdbaExceptionUtils {
         void accept(T t) throws E;
     }
 
+    @FunctionalInterface
     public interface BiConsumer_WithExceptions<T, U, E extends Exception> {
         void accept(T t, U u) throws E;
     }

@@ -19,7 +19,7 @@ import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -32,31 +32,25 @@ import static cpw.mods.modlauncher.LogMarkers.*;
 public class Launcher {
     public static Launcher INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
-    private final TypesafeMap blackboard;
+    private static final TypesafeMap BLACKBOARD = new TypesafeMap();
     private final TransformationServicesHandler transformationServicesHandler;
     private final Environment environment;
-    private final TransformStore transformStore;
     private final NameMappingServiceHandler nameMappingServiceHandler;
-    private final ArgumentHandler argumentHandler;
     private final LaunchServiceHandler launchService;
     private final LaunchPluginHandler launchPlugins;
     private final ModuleLayerHandler moduleLayerHandler;
-    private TransformingClassLoader classLoader;
 
     private Launcher() {
         INSTANCE = this;
         LOGGER.info(MODLAUNCHER,"ModLauncher {} starting: java version {} by {}; OS {} arch {} version {}", IEnvironment.class.getPackage().getImplementationVersion(),  System.getProperty("java.version"), System.getProperty("java.vendor"), System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
         this.moduleLayerHandler = new ModuleLayerHandler();
         this.launchService = new LaunchServiceHandler(this.moduleLayerHandler);
-        this.blackboard = new TypesafeMap();
         this.environment = new Environment(this);
         environment.putPropertyIfAbsent(IEnvironment.Keys.MLSPEC_VERSION.get(), IEnvironment.class.getPackage().getSpecificationVersion());
         environment.putPropertyIfAbsent(IEnvironment.Keys.MLIMPL_VERSION.get(), IEnvironment.class.getPackage().getImplementationVersion());
         environment.computePropertyIfAbsent(IEnvironment.Keys.MODLIST.get(), k -> new ArrayList<>());
         environment.putPropertyIfAbsent(IEnvironment.Keys.SECURED_JARS_ENABLED.get(), ProtectionDomainHelper.canHandleSecuredJars());
-        this.transformStore = new TransformStore();
-        this.transformationServicesHandler = new TransformationServicesHandler(this.transformStore, this.moduleLayerHandler);
-        this.argumentHandler = new ArgumentHandler();
+        this.transformationServicesHandler = new TransformationServicesHandler(new TransformStore(), this.moduleLayerHandler);
         this.nameMappingServiceHandler = new NameMappingServiceHandler(this.moduleLayerHandler);
         this.launchPlugins = new LaunchPluginHandler(this.moduleLayerHandler);
     }
@@ -76,14 +70,14 @@ public class Launcher {
     }
 
     public final TypesafeMap blackboard() {
-        return blackboard;
+        return BLACKBOARD;
     }
 
     private void run(String... args) {
-        var discoveryData = argumentHandler.setArgs(args);
-        transformationServicesHandler.discoverServices(discoveryData);
+        var argumentHandler = new ArgumentHandler(args);
+        transformationServicesHandler.discoverServices(argumentHandler.getDiscoveryData());
 
-        var scanResults = new HashMap<Layer, List<Resource>>();
+        var scanResults = new EnumMap<Layer, List<Resource>>(Layer.class);
 
         for (var resource : transformationServicesHandler.initializeTransformationServices(argumentHandler, environment, nameMappingServiceHandler))
             scanResults.computeIfAbsent(resource.target(), k -> new ArrayList<>()).add(resource);
@@ -107,13 +101,12 @@ public class Launcher {
 
         this.transformationServicesHandler.initialiseServiceTransformers();
         this.launchPlugins.offerScanResultsToPlugins(gameContents);
-        this.launchService.validateLaunchTarget(this.argumentHandler);
-        var classLoaderBuilder = this.launchService.identifyTransformationTargets(this.argumentHandler);
-        this.classLoader = this.transformationServicesHandler.buildTransformingClassLoader(this.launchPlugins, classLoaderBuilder, this.environment, this.moduleLayerHandler);
+        this.launchService.validateLaunchTarget(argumentHandler);
+        TransformingClassLoader classLoader = this.transformationServicesHandler.buildTransformingClassLoader(this.launchPlugins, this.environment, this.moduleLayerHandler);
         var oldCL = Thread.currentThread().getContextClassLoader();
         try {
-            Thread.currentThread().setContextClassLoader(this.classLoader);
-            this.launchService.launch(this.argumentHandler, this.moduleLayerHandler.getLayer(Layer.GAME).orElseThrow(), this.classLoader, this.launchPlugins);
+            Thread.currentThread().setContextClassLoader(classLoader);
+            this.launchService.launch(argumentHandler, this.moduleLayerHandler.getLayer(Layer.GAME).orElseThrow(), classLoader, this.launchPlugins);
         } finally {
             Thread.currentThread().setContextClassLoader(oldCL);
         }

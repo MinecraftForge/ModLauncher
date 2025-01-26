@@ -51,10 +51,10 @@ class TransformationServiceDecoratorTests {
         Set<String> targettedClasses = Whitebox.getInternalState(store, "classNeedsTransforming");
         assertAll(
                 () -> assertTrue(transformers.containsKey(TransformTargetLabel.LabelType.CLASS), "transformers contains class"),
-                () -> assertTrue(getTransformers(transformers.get(TransformTargetLabel.LabelType.CLASS)).values().stream().flatMap(Collection::stream).allMatch(s -> Whitebox.getInternalState(s,"wrapped") == classNodeTransformer), "transformers contains classTransformer"),
+                () -> assertTrue(getTransformers(transformers.get(TransformTargetLabel.LabelType.CLASS)).values().stream().flatMap(Collection::stream).allMatch(s -> Whitebox.getInternalState(s,"delegate") == classNodeTransformer), "transformers contains classTransformer"),
                 () -> assertTrue(targettedClasses.contains("cheese/Puffs"), "targetted classes contains class name cheese/Puffs"),
                 () -> assertTrue(transformers.containsKey(TransformTargetLabel.LabelType.METHOD), "transformers contains method"),
-                () -> assertTrue(getTransformers(transformers.get(TransformTargetLabel.LabelType.METHOD)).values().stream().flatMap(Collection::stream).allMatch(s -> Whitebox.getInternalState(s,"wrapped") == methodNodeTransformer), "transformers contains methodTransformer"),
+                () -> assertTrue(getTransformers(transformers.get(TransformTargetLabel.LabelType.METHOD)).values().stream().flatMap(Collection::stream).allMatch(s -> Whitebox.getInternalState(s,"delegate") == methodNodeTransformer), "transformers contains methodTransformer"),
                 () -> assertTrue(targettedClasses.contains("cheesy/PuffMethod"), "targetted classes contains class name cheesy/PuffMethod")
         );
     }

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+// TODO: [ML} Check if this is still needed
 /**
  * Started as a copy of {@link org.apache.logging.log4j.core.pattern.ExtendedThrowablePatternConverter} because
  * there is no mechanism to hook additional data into that class, which is very rubbish.
@@ -127,37 +128,5 @@ public class TransformingThrowablePatternConverter extends ThrowablePatternConve
      */
     public static TransformingThrowablePatternConverter newInstance(@SuppressWarnings("exports") final Configuration config, final String[] options) {
         return new TransformingThrowablePatternConverter(config, options);
-    }
-
-    @Deprecated(forRemoval = true, since = "10.2.2")
-    public static String generateEnhancedStackTrace(final Throwable throwable) {
-        var proxy = new ThrowableProxy(throwable);
-        var buf = new StringBuilder();
-
-        var trail = Optional.ofNullable(Launcher.INSTANCE)
-            .map(Launcher::environment)
-            .flatMap(env -> env.getProperty(IEnvironment.Keys.AUDITTRAIL.get()))
-            .orElse(null);
-
-        var nl = Strings.LINE_SEPARATOR;
-        var renderer = PlainTextRenderer.getInstance();
-        var suffix = "";
-        //renderer = new ExtraDataTextRenderer(renderer, trail);
-        //suffix = SUFFIXFLAG;
-        proxy.formatExtendedStackTraceTo(buf, Collections.emptyList(), renderer, suffix, nl);
-
-        if (trail != null) {
-            final Map<String, List<String>> audit = new TreeMap<>();
-            buildAuditMap(trail, audit, proxy);
-
-            buf.append("Transformer Audit:").append(nl);
-            for (var cls : audit.keySet()) {
-                buf.append("  ").append(cls).append(nl);
-                for (var line : audit.get(cls))
-                    buf.append("    ").append(line).append(nl);
-            }
-        }
-
-        return buf.toString();
     }
 }

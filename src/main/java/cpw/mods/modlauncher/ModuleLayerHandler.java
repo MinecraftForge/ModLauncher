@@ -46,10 +46,8 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
         layers.computeIfAbsent(layer, l -> new ArrayList<>()).add(jar);
     }
 
-    /** TODO: Make package private */
-    @SuppressWarnings("exports")
-    @Deprecated(since = "10.1")
-    public LayerInfo buildLayer(Layer layer, BiFunction<Configuration, List<ModuleLayer>, ClassLoader> classLoaderSupplier) {
+    // TODO: Consider removing because it's unused
+    LayerInfo buildLayer(Layer layer, BiFunction<Configuration, List<ModuleLayer>, ClassLoader> classLoaderSupplier) {
         return build(layer, (cfg, layers, loaders) -> classLoaderSupplier.apply(cfg, layers));
     }
 
@@ -85,17 +83,13 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
         return info;
     }
 
-    /** TODO: Make package private */
-    @SuppressWarnings("exports")
-    @Deprecated(since = "10.1")
-    public LayerInfo buildLayer(Layer layer) {
+    // TODO: Consider removing because it's unused
+    LayerInfo buildLayer(Layer layer) {
         return build(layer);
     }
 
-    /** TODO: Make package private */
-    @SuppressWarnings("exports")
-    @Deprecated(since = "10.1")
-    public void updateLayer(Layer layer, Consumer<LayerInfo> action) {
+    // TODO: Consider removing because it's unused
+    void updateLayer(Layer layer, Consumer<LayerInfo> action) {
         action.accept(completedLayers.get(layer));
     }
 

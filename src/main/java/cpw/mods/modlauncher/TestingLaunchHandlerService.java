@@ -20,12 +20,12 @@ public class TestingLaunchHandlerService implements ILaunchHandlerService {
         return "testharness";
     }
 
-    public ServiceRunner launchService(String[] arguments, ModuleLayer gameLayer) {
+    public void launchService(String[] arguments, ModuleLayer gameLayer) {
         try {
             Class<?> callableLaunch = Class.forName(System.getProperty("test.harness.callable"), true, Thread.currentThread().getContextClassLoader());
             getClass().getModule().addReads(callableLaunch.getModule());
             MethodHandle handle = MethodHandles.lookup().findStatic(callableLaunch, "supplier", MethodType.methodType(ServiceRunner.class));
-            return (ServiceRunner) handle.invoke();
+            handle.invokeExact();
         } catch (ClassNotFoundException | NoSuchMethodException | LambdaConversionException | IllegalAccessException | InstantiationException e) {
             throw new RuntimeException(e);
         } catch (Throwable throwable) {

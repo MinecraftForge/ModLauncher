@@ -7,7 +7,7 @@ module cpw.mods.modlauncher {
     requires java.base;
     requires org.apache.logging.log4j;
     requires org.apache.logging.log4j.core;
-    requires jopt.simple;
+    requires joptsimple;
     requires transitive cpw.mods.securejarhandler;
     requires static org.jetbrains.annotations;
     requires org.objectweb.asm;
@@ -26,7 +26,6 @@ module cpw.mods.modlauncher {
 
     uses cpw.mods.modlauncher.api.ILaunchHandlerService;
     provides cpw.mods.modlauncher.api.ILaunchHandlerService with
-            cpw.mods.modlauncher.DefaultLaunchHandlerService,
             cpw.mods.modlauncher.TestingLaunchHandlerService;
 
     requires net.minecraftforge.bootstrap.api;

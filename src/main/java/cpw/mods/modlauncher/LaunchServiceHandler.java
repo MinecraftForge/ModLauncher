@@ -35,13 +35,12 @@ final class LaunchServiceHandler {
 
     public LaunchServiceHandler(ModuleLayerHandler layerHandler) {
         var services = ServiceLoader.load(layerHandler.getLayer(Layer.BOOT).orElseThrow(), ILaunchHandlerService.class);
-        for (var loader = services.iterator(); loader.hasNext(); ) {
-            try {
-                var srvc  = loader.next();
-                handlers.put(srvc.name(), srvc);
-            } catch (ServiceConfigurationError sce) {
-                LOGGER.fatal("Encountered serious error loading transformation service, expect problems", sce);
+        try {
+            for (var service : services) {
+                handlers.put(service.name(), service);
             }
+        } catch (ServiceConfigurationError e) {
+            throw new RuntimeException("Encountered serious error loading transformation service", e);
         }
         LOGGER.debug(MODLAUNCHER, "Found launch services [{}]", () -> String.join(",", handlers.keySet()));
     }
@@ -52,29 +51,11 @@ final class LaunchServiceHandler {
 
     private void launch(String target, String[] arguments, ModuleLayer gameLayer, TransformingClassLoader classLoader, LaunchPluginHandler launchPluginHandler) {
         var service = handlers.get(target);
-        var paths = service.getPaths();
-        launchPluginHandler.announceLaunch(classLoader, paths);
+        launchPluginHandler.announceLaunch(classLoader);
         LOGGER.info(MODLAUNCHER, "Launching target '{}' with arguments {}", target, hideAccessToken(arguments));
 
-        ServiceRunner runner = null;
-
         try {
-            runner = service.launchService(arguments, gameLayer);
-        } catch (AbstractMethodError e) {
-            var lookup = MethodHandles.lookup();
-            var type = MethodType.methodType(Callable.class, String[].class, ModuleLayer.class);
-            try {
-                var virtual = lookup.findVirtual(service.getClass(), "launchService", type);
-                Callable<Void> callable = (Callable<Void>)virtual.invokeExact(arguments, gameLayer);
-                runner = callable::call;
-            } catch (Throwable t) {
-                sneak(t);
-            }
-        }
-
-        try {
-
-            runner.run();
+            service.launchService(arguments, gameLayer);
         } catch (Throwable e) {
             sneak(e);
         }
@@ -95,13 +76,6 @@ final class LaunchServiceHandler {
         var launchTarget = argumentHandler.getLaunchTarget();
         var args = argumentHandler.buildArgumentList();
         launch(launchTarget, args, gameLayer, classLoader, launchPluginHandler);
-    }
-
-    TransformingClassLoaderBuilder identifyTransformationTargets(final ArgumentHandler argumentHandler) {
-        var builder = new TransformingClassLoaderBuilder();
-        for (var path : argumentHandler.getSpecialJars())
-            builder.addTransformationPath(path);
-        return builder;
     }
 
     void validateLaunchTarget(final ArgumentHandler argumentHandler) {

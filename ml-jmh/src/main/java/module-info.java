@@ -7,7 +7,6 @@ module net.minecraftforge.modlauncher.jmh {
     requires cpw.mods.modlauncher;
     requires org.objectweb.asm;
     requires org.objectweb.asm.tree;
-    requires jmh.core;
-    requires powermock.core;
-    requires powermock.reflect;
+    requires org.openjdk.jmh;
+    requires net.minecraftforge.unsafe;
 }

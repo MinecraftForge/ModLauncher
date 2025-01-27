@@ -16,6 +16,7 @@ import java.util.*;
 /**
  * Module transforming class loader
  */
+@SuppressWarnings({"removal", "deprecation"})
 public class TransformingClassLoader extends ModuleClassLoader {
     static {
         ClassLoader.registerAsParallelCapable();

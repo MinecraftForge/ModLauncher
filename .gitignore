@@ -26,7 +26,7 @@
 **/logs/
 **/profile.jfr
 /jmh_results.md
-/src/main/resources/META-INF/MANIFEST.MF
+**/src/main/resources/META-INF/MANIFEST.MF
 /test_results.html
 /artifacts/
 /test_artifacts.zip

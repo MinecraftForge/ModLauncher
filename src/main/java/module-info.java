@@ -7,7 +7,7 @@ module cpw.mods.modlauncher {
     requires java.base;
     requires org.apache.logging.log4j;
     requires org.apache.logging.log4j.core;
-    requires jopt.simple;
+    requires transitive jopt.simple;
     requires transitive cpw.mods.securejarhandler;
     requires static org.jetbrains.annotations;
     requires org.objectweb.asm;

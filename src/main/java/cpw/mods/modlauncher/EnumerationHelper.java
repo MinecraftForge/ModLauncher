@@ -9,8 +9,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class EnumerationHelper {
     public static <T> Enumeration<T> merge(Enumeration<T> first, Enumeration<T> second) {

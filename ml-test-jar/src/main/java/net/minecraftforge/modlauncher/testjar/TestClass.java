@@ -13,10 +13,9 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings("unused")
 public class TestClass {
-    private String cheese = "FISH";
+    private String field;
 
-    private String testMethod(String cheese) {
-        String wheee = "HELLO";
-        return Stream.of(cheese, wheee).collect(Collectors.joining(" "));
+    public static String method() {
+        return "unmodified";
     }
 }

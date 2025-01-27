@@ -27,14 +27,17 @@ test {
 }
 
 dependencies {
-    implementation(rootProject)
+    testImplementation(rootProject)
+    testImplementation(projects.modlauncherHarness)
+    testImplementation(projects.mlTestJar)
+
     testImplementation(libs.junit.api)
     testImplementation(libs.unsafe)
     testImplementation(libs.securemodules)
     testImplementation(libs.jopt.simple)
-    testImplementation(project(':ml-test-jar'))
     testImplementation(libs.bundles.powermock)
     testImplementation(libs.bundles.log4j.runtime)
+
     testCompileOnly(libs.nulls)
     testRuntimeOnly(libs.bundles.junit.runtime)
 }
@@ -93,4 +96,13 @@ if (project.hasProperty('javaVendor') && project.hasProperty('javaVersion')) {
 eclipse.classpath {
     containers 'org.eclipse.buildship.core.gradleclasspathcontainer'
     file.whenMerged { entries.findAll { it.kind == 'lib' || it.path == 'org.eclipse.buildship.core.gradleclasspathcontainer' }.each { it.entryAttributes['module'] = 'true' } }
+}
+
+// Merge the resources and classes into the same directory.
+// This is done because java expects modules to be in a single directory.
+// And if we have it in multiple we have to do performance intensive hacks like having the UnionFileSystem
+sourceSets.each {
+    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
+    it.output.resourcesDir = dir
+    it.java.destinationDirectory = dir
 }

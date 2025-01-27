@@ -24,9 +24,10 @@ license {
 dependencies {
     implementation(rootProject)
     implementation(libs.securemodules)
-    implementation(project(':ml-test-jar'))
+    implementation(projects.mlTestJar)
     implementation(libs.bundles.powermock)
     implementation(libs.jmh.core)
+    implementation(libs.jopt.simple)
     runtimeOnly(libs.jmh.ap)
 
     annotationProcessor(libs.jmh.ap)
@@ -37,6 +38,7 @@ extraJavaModuleInfo {
     automaticModule('org.openjdk.jmh:jmh-core', 'jmh.core')
     automaticModule('org.powermock:powermock-core', 'powermock.core')
     automaticModule('org.powermock:powermock-reflect', 'powermock.reflect')
+    automaticModule('net.sf.jopt-simple:jopt-simple', 'jopt.simple')
 }
 
 def jmhArgs = [

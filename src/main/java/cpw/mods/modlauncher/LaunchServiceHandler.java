@@ -20,11 +20,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Identifies the launch target and dispatches to it
@@ -32,8 +32,12 @@ import java.util.concurrent.Callable;
 final class LaunchServiceHandler {
     private static final Logger LOGGER = LogManager.getLogger();
     private final Map<String, ILaunchHandlerService> handlers = new HashMap<>();
+    private final boolean quiet;
 
     public LaunchServiceHandler(ModuleLayerHandler layerHandler) {
+        this(layerHandler, false);
+    }
+    public LaunchServiceHandler(ModuleLayerHandler layerHandler, boolean quiet) {
         var services = ServiceLoader.load(layerHandler.getLayer(Layer.BOOT).orElseThrow(), ILaunchHandlerService.class);
         for (var loader = services.iterator(); loader.hasNext(); ) {
             try {
@@ -43,7 +47,9 @@ final class LaunchServiceHandler {
                 LOGGER.fatal("Encountered serious error loading transformation service, expect problems", sce);
             }
         }
-        LOGGER.debug(MODLAUNCHER, "Found launch services [{}]", () -> String.join(",", handlers.keySet()));
+        this.quiet = quiet;
+        if (!quiet)
+            LOGGER.debug(MODLAUNCHER, "Found launch services [{}]", () -> handlers.keySet().stream().sorted().collect(Collectors.joining(", ")));
     }
 
     public Optional<ILaunchHandlerService> findLaunchHandler(final String name) {
@@ -54,7 +60,8 @@ final class LaunchServiceHandler {
         var service = handlers.get(target);
         var paths = service.getPaths();
         launchPluginHandler.announceLaunch(classLoader, paths);
-        LOGGER.info(MODLAUNCHER, "Launching target '{}' with arguments {}", target, hideAccessToken(arguments));
+        if (!quiet)
+            LOGGER.info(MODLAUNCHER, "Launching target '{}' with arguments {}", target, hideAccessToken(arguments));
 
         ServiceRunner runner = null;
 

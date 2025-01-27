@@ -47,8 +47,11 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ModLauncher"
+rootProject.name = 'modlauncher'
+
+enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
 include 'ml-jmh'
 include 'ml-test'
 include 'ml-test-jar'
+include 'modlauncher-harness'

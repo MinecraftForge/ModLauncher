@@ -1,0 +1,99 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+    id 'maven-publish'
+    id 'com.github.ben-manes.versions' version '0.49.0'
+    id 'net.minecraftforge.gradleutils' version '[2.3,2.4)'
+    id 'org.gradlex.extra-java-module-info' version '1.5'
+    id 'net.minecraftforge.licenser' version '1.0.1'
+}
+
+repositories {
+    mavenCentral()
+    maven gradleutils.forgeMaven
+}
+
+group = 'net.minecraftforge'
+gradleutils.gitRoot = rootProject.projectDir
+version = gradleutils.tagOffsetVersion
+logger.lifecycle("$project.name Version: $version")
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(16)
+}
+
+license {
+    header = rootProject.file("LICENSE-header.txt")
+}
+
+dependencies {
+    implementation(rootProject)
+    implementation(libs.jopt.simple)
+    implementation(libs.unsafe)
+    implementation(libs.securemodules)
+    compileOnly(libs.nulls)
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title':    'modlauncher-harness',
+            'Specification-Vendor':   'Forge Development LLC',
+            'Specification-Version':  gradleutils.gitInfo.tag,
+            'Implementation-Title':   project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor':  'Forge Development LLC'
+        ] as LinkedHashMap, 'net/minecraftforge/modlauncher/harness/')
+    }
+}
+
+publishing {
+    publications.register('mavenJava', MavenPublication) {
+        from components.java
+        artifactId = 'modlauncher-harness'
+        pom {
+            name = 'Mod Launcher'
+            description = 'Unit testing harness for ModLauncher'
+            url = 'https://github.com/MinecraftForge/ModLauncher'
+            gradleutils.pom.setGitHubDetails(pom, 'ModLauncher')
+
+            license gradleutils.pom.Licenses.LGPLv2_1
+            developers {
+                developer gradleutils.pom.Developers.LexManos
+            }
+        }
+    }
+    repositories {
+        maven gradleutils.publishingForgeMaven
+    }
+}
+
+tasks.register('writeManifest') {
+    doLast {
+        jar.manifest.writeTo(file('src/main/resources/META-INF/MANIFEST.MF'))
+    }
+}
+
+eclipse {
+    autoBuildTasks writeManifest
+}
+
+// Hack eclipse into knowing that the gradle deps are modules
+eclipse.classpath {
+    containers 'org.eclipse.buildship.core.gradleclasspathcontainer'
+    file.whenMerged { entries.findAll { it.kind == 'lib' || it.path == 'org.eclipse.buildship.core.gradleclasspathcontainer' }.each { it.entryAttributes['module'] = 'true' } }
+}
+
+// Merge the resources and classes into the same directory.
+// This is done because java expects modules to be in a single directory.
+// And if we have it in multiple we have to do performance intensive hacks like having the UnionFileSystem
+sourceSets.each {
+    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
+    it.output.resourcesDir = dir
+    it.java.destinationDirectory = dir
+}
+
+extraJavaModuleInfo {
+    failOnMissingModuleInfo = false
+    automaticModule('net.sf.jopt-simple:jopt-simple', 'jopt.simple')
+}

@@ -40,8 +40,7 @@ dependencies {
 
 configurations.all {
     outgoing {
-        capability("net.minecraftforge:modlauncher:$version")
-        capability("net.minecraftforge:ModLauncher:$version") // Stupid case sensitivity when using project deps
+        capability("$project.group:$project.name:$version")
         capability("cpw.mods:modlauncher:$version")
     }
 }

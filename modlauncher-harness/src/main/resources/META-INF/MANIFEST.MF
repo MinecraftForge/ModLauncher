@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+
+Name: net/minecraftforge/modlauncher/harness/
+Specification-Title: modlauncher-harness
+Specification-Vendor: Forge Development LLC
+Specification-Version: 10.2
+Implementation-Title: modlauncher-harness
+Implementation-Version: 10.2.4
+Implementation-Vendor: Forge Development LLC
+

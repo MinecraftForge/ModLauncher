@@ -5,96 +5,111 @@
 
 package net.minecraftforge.modlauncher.test;
 
-import cpw.mods.modlauncher.ArgumentHandler;
-import cpw.mods.modlauncher.Launcher;
-import cpw.mods.modlauncher.TransformationServiceDecorator;
-import cpw.mods.modlauncher.api.IEnvironment;
-import cpw.mods.modlauncher.api.IModuleLayerManager;
-import cpw.mods.modlauncher.api.ITransformationService;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiFunction;
+
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.powermock.reflect.Whitebox;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.stream.Collectors;
-import static org.junit.jupiter.api.Assertions.*;
+import cpw.mods.modlauncher.Launcher;
+import cpw.mods.modlauncher.TransformationServiceDecorator;
+import cpw.mods.modlauncher.api.IEnvironment;
+import cpw.mods.modlauncher.api.IModuleLayerManager.Layer;
+import cpw.mods.modlauncher.api.ITransformationService;
+import cpw.mods.modlauncher.api.ITransformer;
+import cpw.mods.modlauncher.api.IncompatibleEnvironmentException;
+import joptsimple.OptionSpec;
+import joptsimple.OptionSpecBuilder;
+import net.minecraftforge.modlauncher.harness.ModLauncherTest;
+import net.minecraftforge.modlauncher.testjar.ModLauncherTestMarker;
+import net.minecraftforge.modlauncher.testjar.ResourceLoadingClass;
 
 /**
  * Test overall launcher
  */
-class LauncherTests {
-    private static final String TARGET_MODULE = "net.minecraftforge.modlauncher.testjar";
-    private static final String TARGET_CLASS = TARGET_MODULE + ".TestClass";
-    private static final String RESOURCE_CLASS = TARGET_MODULE + ".ResourceLoadingClass";
-
+public class LauncherTests {
     @Test
     void testLauncher() throws Exception {
-        UnsafeHacksUtil.hackPowermock();
-        System.setProperty("test.harness", "../ml-test-jar/build/classes/java/main\0../ml-test-jar/build/resources/main");
+        if (!ModLauncherTest.isTransformed()) {
+            ModLauncherTest.addPath(Layer.GAME, ModLauncherTest.getPath(ModLauncherTestMarker.class));
+            ModLauncherTest.launch("--" + TransformationService.name + ".test", "test arg");
+            return;
+        }
 
-        Launcher.main("--version", "1.0", "--launchTarget", "mockLaunch", "--test.mods", "A,B,C," + TARGET_CLASS, "--accessToken", "SUPERSECRET!");
+        UnsafeHacksUtil.hackPowermock();
         Launcher instance = Launcher.INSTANCE;
+
         final Map<String, TransformationServiceDecorator> services = Whitebox.getInternalState(Whitebox.getInternalState(instance, "transformationServicesHandler"), "serviceLookup");
         final List<ITransformationService> launcherServices = services.values().stream()
             .map(dec -> Whitebox.<ITransformationService>getInternalState(dec, "service"))
             .toList();
-        assertAll("services are present and correct",
-                () -> assertEquals(1, launcherServices.size(), "Found 1 service"),
-                () -> assertEquals(MockTransformerService.class, launcherServices.get(0).getClass(), "Found Test Launcher Service")
-        );
+        var service = launcherServices.stream()
+            .filter(s -> s.name().equals(TransformationService.name))
+            .findFirst().orElse(null);
+        assertNotNull(service, "Failed to locate test TransformationService");
+        assertNotNull(Whitebox.getInternalState(service, "testArg"), "TransformationService custom arguments wernt created");
+        assertEquals("test arg", Whitebox.getInternalState(service, "testArgValue"), "TransformationService did not get the correct argument");
+        assertTrue(Whitebox.<Boolean>getInternalState(service, "initalized"), "TransforamtionService initalize was never called");
 
-        final ArgumentHandler argumentHandler = Whitebox.getInternalState(instance, "argumentHandler");
-        final OptionSet options = Whitebox.getInternalState(argumentHandler, "optionSet");
-        Map<String, OptionSpec<?>> optionsMap = options.specs().stream().collect(Collectors.toMap(s -> String.join(",", s.options()), s -> s, (u, u2) -> u));
+        assertEquals("test.harness", instance.environment().getProperty(IEnvironment.Keys.LAUNCHTARGET.get()).orElse(null), "Launcher environment was not set");
 
-        assertAll("options are correctly setup",
-                () -> assertTrue(optionsMap.containsKey("version"), "Version field is correct"),
-                () -> assertTrue(optionsMap.containsKey("test.mods"), "Test service option is correct")
-        );
-
-        final MockTransformerService mockTransformerService = (MockTransformerService) launcherServices.get(0);
-        assertAll("test launcher service is correctly configured",
-                () -> assertIterableEquals(Arrays.asList("A", "B", "C", TARGET_CLASS), Whitebox.getInternalState(mockTransformerService, "modList"), "modlist is configured"),
-                () -> assertEquals("INITIALIZED", Whitebox.getInternalState(mockTransformerService, "state"), "Initialized was called")
-        );
-
-        assertAll(
-                () -> assertNotNull(instance.environment().getProperty(IEnvironment.Keys.VERSION.get()))
-        );
-
-        try {
-            ClassLoader transformingClassLoader = Whitebox.getInternalState(Launcher.INSTANCE, "classLoader");
-            var transformedClass = Class.forName(TARGET_CLASS, true, transformingClassLoader);
-            assertDoesNotThrow(() -> transformedClass.getDeclaredField("testfield"), "Transformer failed to run");
-            var layerManager = Launcher.INSTANCE.findLayerManager().orElseThrow();
-            var pluginLayer = layerManager.getLayer(IModuleLayerManager.Layer.PLUGIN).orElseThrow();
-            var rawModule = pluginLayer.findModule(TARGET_MODULE).orElseThrow();
-            var rawClass = Class.forName(rawModule, TARGET_CLASS);
-            assertThrows(NoSuchFieldException.class, () -> rawClass.getDeclaredField("testfield"), "Raw class had field that was supposed to be injected by transformer");
-
-            var resClass = Class.forName(RESOURCE_CLASS, true, transformingClassLoader);
-            assertFindResource(resClass);
-        } catch (ClassNotFoundException e) {
-            fail("Can't load class", e);
+        URL resource = new ResourceLoadingClass().resource;
+        assertNotNull(resource, "Resource not found");
+        // assert that we can find something in the resource, so we know it loaded properly
+        try (InputStream in = resource.openStream()) {
+            var data = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            assertEquals("Loaded successfully!", data, "Resource has incorrect content");
         }
     }
 
-    private void assertFindResource(Class<?> loaded) throws Exception {
-        Object instance = loaded.getDeclaredConstructor().newInstance();
-        URL resource = (URL) Whitebox.getField(loaded, "resource").get(instance);
-        assertNotNull(resource, "Resource not found");
-        // assert that we can find something in the resource, so we know it loaded properly
-        try (InputStream in = resource.openStream();
-             Scanner scanner = new Scanner(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-            assertTrue(scanner.nextLine().contains("Loaded successfully!"), "Resource has incorrect content");
+    public static class TransformationService implements ITransformationService {
+        public static final String name = (LauncherTests.class.getSimpleName() + "." + TransformationService.class.getSimpleName()).toLowerCase(Locale.ENGLISH);
+        public boolean initalized = false;
+        public OptionSpec<String> testArg;
+        public String testArgValue;
+
+
+        @Override
+        public @NotNull String name() {
+            return name;
+        }
+
+        @Override
+        public void initialize(IEnvironment environment) {
+            initalized = true;
+        }
+
+        @Override
+        public void onLoad(IEnvironment env, Set<String> otherServices) throws IncompatibleEnvironmentException {
+        }
+
+        @Override
+        public void arguments(BiFunction<String, String, OptionSpecBuilder> builder) {
+            testArg = builder.apply("test", "A test argument requiring a string value")
+                .withRequiredArg().ofType(String.class);
+        }
+
+        @Override
+        public void argumentValues(OptionResult result) {
+            testArgValue = result.value(testArg);
+        }
+
+        @SuppressWarnings("rawtypes")
+        @Override
+        public @NotNull List<ITransformer> transformers() {
+            return Collections.emptyList();
         }
     }
 }

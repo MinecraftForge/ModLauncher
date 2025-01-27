@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-3.0-only
  */
 
-module net.minecraftforge.modlauncher.testjar {
+open module net.minecraftforge.modlauncher.testjar {
     exports net.minecraftforge.modlauncher.testjar;
 
     provides net.minecraftforge.modlauncher.testjar.ITestServiceLoader with

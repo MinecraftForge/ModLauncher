@@ -17,8 +17,6 @@ import java.nio.file.Path;
 import java.security.*;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.*;
-
 import static cpw.mods.modlauncher.LogMarkers.MODLAUNCHER;
 
 /**

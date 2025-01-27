@@ -5,30 +5,22 @@
 
 package cpw.mods.modlauncher;
 
-import cpw.mods.modlauncher.api.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import cpw.mods.modlauncher.api.ITransformer;
 
 /**
- * Holds onto a specific list of transformers targetting a particular node type
+ * Holds onto a specific list of transformers targeting a particular node type
  */
 @SuppressWarnings("WeakerAccess")
 public class TransformList<T> {
     private final Map<TransformTargetLabel, List<ITransformer<T>>> transformers = new ConcurrentHashMap<>();
-    private final Class<T> nodeType;
 
-    TransformList(Class<T> nodeType) {
-        this.nodeType = nodeType;
-    }
-
-    /**
-     * Testing only
-     * @return a map
-     */
-    private Map<TransformTargetLabel, List<ITransformer<T>>> getTransformers() {
-        return transformers;
+    TransformList(/*parameter so generic can be inferred*/Class<T> nodeType) {
     }
 
     void addTransformer(TransformTargetLabel targetLabel, ITransformer<T> transformer) {

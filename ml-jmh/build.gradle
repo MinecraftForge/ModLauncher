@@ -1,11 +1,11 @@
 plugins {
     id 'eclipse'
     id 'java-library'
-    id 'org.gradlex.extra-java-module-info' version '1.5'
-    id 'com.github.ben-manes.versions' version '0.49.0'
-    id 'net.minecraftforge.gradleutils' version '[2.3,2.4)'
-    id 'net.minecraftforge.licenser' version '1.0.1'
-    id 'com.diffplug.eclipse.apt' version '3.43.0'
+    alias libs.plugins.apt
+    alias libs.plugins.license
+    alias libs.plugins.gradleutils
+    alias libs.plugins.versions
+    alias libs.plugins.modules
 }
 
 repositories {
@@ -24,9 +24,10 @@ license {
 dependencies {
     implementation(rootProject)
     implementation(libs.securemodules)
-    implementation(project(':ml-test-jar'))
-    implementation(libs.bundles.powermock)
+    implementation(libs.unsafe)
+    implementation(projects.mlTestJar)
     implementation(libs.jmh.core)
+    implementation(libs.jopt.simple)
     runtimeOnly(libs.jmh.ap)
 
     annotationProcessor(libs.jmh.ap)
@@ -34,9 +35,8 @@ dependencies {
 
 extraJavaModuleInfo {
     failOnMissingModuleInfo = false
-    automaticModule('org.openjdk.jmh:jmh-core', 'jmh.core')
-    automaticModule('org.powermock:powermock-core', 'powermock.core')
-    automaticModule('org.powermock:powermock-reflect', 'powermock.reflect')
+    automaticModule('org.openjdk.jmh:jmh-core', 'org.openjdk.jmh') // They havent had a release in years -.-  https://github.com/openjdk/jmh/commit/a1ca901e8910d1206c4a957719b6e98fa3c67a61
+    automaticModule('net.sf.jopt-simple:jopt-simple', 'jopt.simple')
 }
 
 def jmhArgs = [

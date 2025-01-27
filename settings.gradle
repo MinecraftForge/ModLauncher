@@ -12,6 +12,12 @@ plugins {
 dependencyResolutionManagement {
     versionCatalogs {
         libs {
+            plugin('apt', 'com.diffplug.eclipse.apt').version('4.3.0')
+            plugin('license', 'net.minecraftforge.licenser').version('1.2.0')
+            plugin('gradleutils', 'net.minecraftforge.gradleutils').version('[2.3,2.4)')
+            plugin('versions', 'com.github.ben-manes.versions').version('0.52.0')
+            plugin('modules', 'org.gradlex.extra-java-module-info').version('1.5')
+            
             version('asm', '9.7.1')
             library('asm',         'org.ow2.asm', 'asm'        ).versionRef('asm')
             library('asm-tree',    'org.ow2.asm', 'asm-tree'   ).versionRef('asm')
@@ -35,11 +41,6 @@ dependencyResolutionManagement {
             library('log4j-core', 'org.apache.logging.log4j', 'log4j-core').versionRef('log4j')
             bundle('log4j-runtime', ['log4j-api', 'log4j-core'])
 
-            version('powermock', '2.0.9')
-            library('powermock-core', 'org.powermock', 'powermock-core').versionRef('powermock')
-            library('powermock-reflect', 'org.powermock', 'powermock-reflect').versionRef('powermock')
-            bundle('powermock', ['powermock-core', 'powermock-reflect'])
-
             version('jmh', '1.37')
             library('jmh-core', 'org.openjdk.jmh', 'jmh-core').versionRef('jmh')
             library('jmh-ap', 'org.openjdk.jmh', 'jmh-generator-annprocess').versionRef('jmh')
@@ -47,8 +48,11 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ModLauncher"
+rootProject.name = 'modlauncher'
+
+enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
 include 'ml-jmh'
 include 'ml-test'
 include 'ml-test-jar'
+include 'modlauncher-harness'

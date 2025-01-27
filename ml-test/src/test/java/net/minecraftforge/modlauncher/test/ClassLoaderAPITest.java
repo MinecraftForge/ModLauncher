@@ -6,7 +6,11 @@
 package net.minecraftforge.modlauncher.test;
 
 import cpw.mods.modlauncher.Launcher;
-import cpw.mods.modlauncher.api.IModuleLayerManager;
+import cpw.mods.modlauncher.api.IModuleLayerManager.Layer;
+import net.minecraftforge.modlauncher.harness.ModLauncherTest;
+import net.minecraftforge.modlauncher.testjar.ITestServiceLoader;
+import net.minecraftforge.modlauncher.testjar.ModLauncherTestMarker;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.ServiceLoader;
@@ -15,18 +19,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ClassLoaderAPITest {
     @Test
-    void testGetResources() throws ClassNotFoundException {
-        var testMod = "net.minecraftforge.modlauncher.testjar.TestClass";
-        var testServiceLoader = "net.minecraftforge.modlauncher.testjar.ITestServiceLoader";
+    void testServiceLoader() {
+        if (!ModLauncherTest.isTransformed()) {
+            ModLauncherTest.addPath(Layer.GAME, ModLauncherTest.getPath(ModLauncherTestMarker.class));
+            ModLauncherTest.launch();
+        } else {
+            var manager = Launcher.INSTANCE.findLayerManager().orElse(null);
+            assertTrue(manager != null, "Failed to find layer manager");
+            var layer = manager.getLayer(Layer.GAME).orElse(null);
+            assertTrue(layer != null, "Failed to find game layer");
+            // We need to add uses in case our module info does't already
+            getClass().getModule().addUses(ITestServiceLoader.class);
 
-        Launcher.main("--version", "1.0", "--launchTarget", "mockLaunch", "--test.mods", "A,B,C," + testMod, "--accessToken", "SUPERSECRET!");
-        ModuleLayer layer = Launcher.INSTANCE.findLayerManager()
-            .flatMap(manager -> manager.getLayer(IModuleLayerManager.Layer.GAME))
-            .orElseThrow();
-        final Class<?> service = Thread.currentThread().getContextClassLoader().loadClass(testServiceLoader);
-        getClass().getModule().addUses(service);
-
-        final ServiceLoader<?> load = ServiceLoader.load(layer, service);
-        assertTrue(load.iterator().hasNext());
+            var load = ServiceLoader.load(layer, ITestServiceLoader.class);
+            var services = load.stream().toList();
+            assertTrue(services.size() == 1, "Failed to load service");
+        }
     }
 }

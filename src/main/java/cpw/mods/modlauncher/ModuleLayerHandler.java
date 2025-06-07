@@ -5,16 +5,16 @@
 
 package cpw.mods.modlauncher;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -96,8 +96,7 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
         try {
         	cfg = Configuration.resolveAndBind(smf, parentConfigs, ModuleFinder.of(), targets);
 		} catch (ResolutionException e) {
-			String message = e.getMessage();
-			resolveFail(smf,message,extractModuleNames(message));
+			resolveFail(jars,e);
 			throw e;
 		}
 
@@ -112,107 +111,155 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
     }
     
 
-    public static List<String> extractModuleNames(String message) {
-        // Local denylist to filter out keywords
-        Set<String> denylist = Set.of(
-            "module", "modules", "named", "that", "and", "or",
-            "exports", "requires", "contains", "reads"
-        );
-        Set<String> modules = new LinkedHashSet<>();
+    static List<String> extractModuleNames(String msg) {
+        if (msg.toLowerCase().startsWith("module ") && msg.contains(" reads another module named ")) {
+            return handleReadsAnother(msg);
+        } else if (msg.toLowerCase().startsWith("module ") && msg.contains(" reads more than one module named ")) {
+            return handleReadsMoreThanOne(msg);
+        } else if (msg.toLowerCase().startsWith("module ") && msg.contains(" does not read a module that exports ")) {
+            return handleDoesNotReadExported(msg);
+        } else if (msg.toLowerCase().startsWith("module ") && msg.contains(" contains package ")) {
+            return handleContainsPackage(msg);
+        } else if (msg.toLowerCase().startsWith("modules ") && msg.contains(" export package ") && msg.contains(" to module ")) {
+            return handleExportsPackageToModule(msg);
+        } else if (msg.toLowerCase().startsWith("cycle detected:")) {
+            return handleCycleDetected(msg);
+        } else {
+            System.out.println("Unsupported error format");
+            return Collections.emptyList();
+        }
+    }
+  
+    /**
+     * Module foo reads another module named bar
+     */
+    private static List<String> handleReadsAnother(String msg) {
+        String[] parts = msg.split("(?i) reads another module named ");
+        String source = parts[0].trim().substring("Module ".length()).trim();
+        String target = parts[1].trim();
+        return Arrays.asList(source, target);
+    }
 
-        // This group now allows dotted names: foo, com.example.app, net.minecraftforge.forge, etc.
-        String MOD = "[a-z][A-Za-z0-9_]*(?:\\.[a-z][A-Za-z0-9_]*)*";
+    /**
+     * module baz reads more than one module named qux and corge
+     */
+    private static List<String> handleReadsMoreThanOne(String msg) {
+        String[] parts = msg.split("(?i) reads more than one module named ");
+        String source = parts[0].trim().substring("module ".length()).trim();
+        String tail = parts[1].trim();
+        List<String> targets = splitOnAndOrComma(tail);
+        List<String> modules = new ArrayList<>();
+        modules.add(source);
+        modules.addAll(targets);
+        return modules;
+    }
 
-        // 1) After "module"/"modules" or "named"
-        Pattern p1 = Pattern.compile(
-            "(?i)(?<=\\b(?:modules?|named)\\s)" +
-            "(" + MOD + ")(?:\\s*(?:,|and|or)\\s*(" + MOD + "))*"
-        );
-        Matcher m1 = p1.matcher(message);
-        while (m1.find()) {
-            for (int i = 1; i <= m1.groupCount(); i++) {
-                String name = m1.group(i);
-                if (name != null && !denylist.contains(name.toLowerCase())) {
-                    modules.add(name);
-                }
+    /**
+     * module grault does not read a module that exports garply
+     */
+    private static List<String> handleDoesNotReadExported(String msg) {
+        String[] parts = msg.split("(?i) does not read a module that exports ");
+        String source = parts[0].trim().substring("module ".length()).trim();
+        return Collections.singletonList(source);
+    }
+
+    /**
+     *module fred contains package quux, module plugh exports package corge to thud
+     */
+    private static List<String> handleContainsPackage(String msg) {
+        String[] clauses = msg.split(",");
+        String c1 = clauses[0].trim();
+        String src1 = c1.split("(?i) contains package ")[0]
+                       .substring("module ".length()).trim();
+        List<String> modules = new ArrayList<>();
+        modules.add(src1);
+
+        if (clauses.length > 1) {
+            String c2 = clauses[1].trim();
+            if (c2.toLowerCase().contains(" exports package ") && c2.toLowerCase().contains(" to ")) {
+                String[] parts2 = c2.split("(?i) exports package ");
+                String src2 = parts2[0].substring("module ".length()).trim();
+                String[] tail = parts2[1].split("(?i) to ");
+                String tgt2 = tail[1].trim();
+
+                modules.add(src2);
+                modules.add(tgt2);
             }
         }
 
-        // 2) Cycle detection (usually simple names, but we'll allow dots here too)
-        Pattern p2 = Pattern.compile(
-            "(?i)Cycle detected:\\s*(" + MOD + "(?:\\s*->\\s*" + MOD + ")+)"
-        );
-        Matcher m2 = p2.matcher(message);
-        if (m2.find()) {
-            for (String name : m2.group(1).split("\\s*->\\s*")) {
-                if (!denylist.contains(name.toLowerCase())) {
-                    modules.add(name);
-                }
+        return modules;
+    }
+
+    /**
+     * Handles error messages where multiple modules export a package to another module.
+     * modules xyzzy and plugh export package quux to module frobozz
+     */
+    private static List<String> handleExportsPackageToModule(String msg) {
+        String core = msg.substring("modules ".length()).trim();
+        String[] parts = core.split("(?i) export package ");
+        String moduleList = parts[0].trim();
+        String[] tail = parts[1].split("(?i) to module ");
+        String dest = tail[1].trim();
+        List<String> sources = splitOnAndOrComma(moduleList);
+        List<String> modules = new ArrayList<>(sources);
+        modules.add(dest);
+        return modules;
+    }
+
+    /**
+     *Cycle detected: foo -> bar -> baz -> foo
+     */
+    private static List<String> handleCycleDetected(String msg) {
+        String tail = msg.substring("Cycle detected:".length()).trim();
+        String[] nodes = tail.split("\\s*->\\s*");
+        return new ArrayList<>(Arrays.asList(nodes));
+    }
+
+    private static List<String> splitOnAndOrComma(String input) {
+        List<String> out = new ArrayList<>();
+        String normalised = input.replaceAll("(?i)\\s+and\\s+", ",");
+        for (String piece : normalised.split("\\s*,\\s*")) {
+            if (!piece.isBlank()) {
+                out.add(piece.trim());
             }
         }
-
-        return new ArrayList<>(modules);
+        return out;
     }
 
     
-    public static void resolveFail(SecureModuleFinder finder, String message, List<String> modules) {
+    static void resolveFail(SecureJar[] jars, ResolutionException exception) {
+    	StringWriter trace = new StringWriter();
+        exception.printStackTrace(new PrintWriter(trace));
+    	List<String> premodules = extractModuleNames(exception.getMessage());
         StringBuilder build = new StringBuilder();
-        build.append(message);
-        if (!message.isEmpty() && !message.endsWith("\n")) {
-            build.append(System.lineSeparator());
-        }
+        build.append(System.lineSeparator());
+        build.append(trace.toString());
 
         build.append("Impacted Modules:").append(System.lineSeparator());
 
         List<String> moduleLines = new ArrayList<>();
+        Set<String> modules = new HashSet<String>();
+        modules.addAll(premodules);
         for (String module : modules) {
-            String location = getModuleLocation(finder, module);
+            String location = getModuleLocation(jars, module);
             moduleLines.add("- " + module + " (" + location + ")");
         }
-
         if (!moduleLines.isEmpty()) {
             build.append(String.join(System.lineSeparator(), moduleLines));
         } else {
             build.append("  (Could not find)");
         }
-
         LOGGER.log(Level.FATAL, build.toString());
     }
      
 
 
-     public static String getModuleLocation(SecureModuleFinder finder, String name) {
-         for (ModuleReference reference : finder.findAll()) {
-             if (reference.descriptor().name().equals(name)) {
-                 Optional<URI> location = reference.location();
-                 if (location.isPresent()) {
-                     URI uri = location.get();
-
-                     if ("jar".equalsIgnoreCase(uri.getScheme())) {
-                         String spec = uri.getSchemeSpecificPart();
-
-                         if (spec == null) {
-                             return null;
-                         }
-                         int exclamationIndex = spec.indexOf('!');
-                         if (exclamationIndex != -1) {
-                             spec = spec.substring(0, exclamationIndex);
-                         }
-
-                         try {
-                             // Use Paths.get() to safely parse the file path
-                             Path jarPath = Paths.get(new URI(spec));
-                             return jarPath.getFileName().toString();
-                         } catch (Exception e) {
-                             // Fallback: Try parsing directly as a file path (in case of malformed URI)
-                             // Remove any leading "file:" prefix before parsing
-                             String cleanSpec = spec.replaceFirst("^file:", "");
-                             Path fallbackPath = Paths.get(cleanSpec);
-                             return fallbackPath.getFileName().toString();
-                         }
-                     }
-                 }
-             }
+    public static String getModuleLocation(SecureJar[] jars, String name) {
+         for(SecureJar jar:jars) {
+        	 String mod_name=jar.moduleDataProvider().name();
+        	 if(mod_name.equals(name)) {
+        		 return jar.getPrimaryPath().toFile().getName();
+        	 }
          }
          return null;
      }

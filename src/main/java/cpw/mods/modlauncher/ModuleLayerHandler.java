@@ -17,6 +17,7 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -90,16 +91,13 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
             parentConfigs.add(info.layer().configuration());
             parentLoaders.add(info.cl());
         }
-
         Configuration cfg = null;
-        SecureModuleFinder smf = SecureModuleFinder.of(jars);
         try {
-        	cfg = Configuration.resolveAndBind(smf, parentConfigs, ModuleFinder.of(), targets);
-		} catch (ResolutionException e) {
+        	cfg = Configuration.resolveAndBind(SecureModuleFinder.of(jars), parentConfigs, ModuleFinder.of(), targets);
+		}catch (ResolutionException e) {
 			resolveFail(jars,e);
 			throw e;
 		}
-
         var classLoader = classLoaderSupplier.create(cfg, parentLayers, parentLoaders);
 
         // TODO: [ML] This should actually find the correct CL for each module, not just use the newly created one
@@ -111,23 +109,25 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
     }
     
 
-    static List<String> extractModuleNames(String msg) {
-        if (msg.toLowerCase().startsWith("module ") && msg.contains(" reads another module named ")) {
-            return handleReadsAnother(msg);
-        } else if (msg.toLowerCase().startsWith("module ") && msg.contains(" reads more than one module named ")) {
-            return handleReadsMoreThanOne(msg);
-        } else if (msg.toLowerCase().startsWith("module ") && msg.contains(" does not read a module that exports ")) {
-            return handleDoesNotReadExported(msg);
-        } else if (msg.toLowerCase().startsWith("module ") && msg.contains(" contains package ")) {
-            return handleContainsPackage(msg);
-        } else if (msg.toLowerCase().startsWith("modules ") && msg.contains(" export package ") && msg.contains(" to module ")) {
-            return handleExportsPackageToModule(msg);
-        } else if (msg.toLowerCase().startsWith("cycle detected:")) {
+    static List<String> extractModuleNames(String message) {
+    	String msg = message.toLowerCase(Locale.ENGLISH);
+    	if(msg.toLowerCase().startsWith("modules ") && msg.contains(" export package ") && msg.contains(" to module ")) {
+    		return handleExportsPackageToModule(msg);
+    	}else if(msg.startsWith("module ")) {
+    		if (msg.contains(" reads another module named ")) {
+                return handleReadsAnother(msg);
+            } else if (msg.contains(" reads more than one module named ")) {
+                return handleReadsMoreThanOne(msg);
+            } else if (msg.contains(" does not read a module that exports ")) {
+                return handleDoesNotReadExported(msg);
+            } else if (msg.contains(" contains package ")) {
+                return handleContainsPackage(msg);
+            }
+    	}else if (msg.startsWith("cycle detected:")) {
             return handleCycleDetected(msg);
-        } else {
-            System.out.println("Unsupported error format");
-            return Collections.emptyList();
-        }
+    	}
+        LOGGER.error("Unsupported error format");
+        return Collections.emptyList();
     }
   
     /**
@@ -228,15 +228,10 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
 
     
     static void resolveFail(SecureJar[] jars, ResolutionException exception) {
-    	StringWriter trace = new StringWriter();
-        exception.printStackTrace(new PrintWriter(trace));
     	List<String> premodules = extractModuleNames(exception.getMessage());
         StringBuilder build = new StringBuilder();
+        build.append(exception.getMessage());
         build.append(System.lineSeparator());
-        build.append(trace.toString());
-
-        build.append("Impacted Modules:").append(System.lineSeparator());
-
         List<String> moduleLines = new ArrayList<>();
         Set<String> modules = new HashSet<String>();
         modules.addAll(premodules);
@@ -245,9 +240,8 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
             moduleLines.add("- " + module + " (" + location + ")");
         }
         if (!moduleLines.isEmpty()) {
+            build.append("Impacted Modules:").append(System.lineSeparator());
             build.append(String.join(System.lineSeparator(), moduleLines));
-        } else {
-            build.append("  (Could not find)");
         }
         LOGGER.log(Level.FATAL, build.toString());
     }
@@ -258,7 +252,7 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
          for(SecureJar jar:jars) {
         	 String mod_name=jar.moduleDataProvider().name();
         	 if(mod_name.equals(name)) {
-        		 return jar.getPrimaryPath().toFile().getName();
+        		 return jar.getPrimaryPath().toString();
         	 }
          }
          return null;

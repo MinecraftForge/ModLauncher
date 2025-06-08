@@ -94,10 +94,10 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
         Configuration cfg = null;
         try {
         	cfg = Configuration.resolveAndBind(SecureModuleFinder.of(jars), parentConfigs, ModuleFinder.of(), targets);
-		}catch (ResolutionException e) {
-			resolveFail(jars,e);
-			throw e;
-		}
+	} catch (ResolutionException e) {
+		resolveFail(jars,e);
+		throw e;
+	}
         var classLoader = classLoaderSupplier.create(cfg, parentLayers, parentLoaders);
 
         // TODO: [ML] This should actually find the correct CL for each module, not just use the newly created one

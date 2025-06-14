@@ -5,8 +5,6 @@
 
 package cpw.mods.modlauncher;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ResolutionException;
@@ -15,15 +13,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -94,10 +89,14 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
         Configuration cfg = null;
         try {
         	cfg = Configuration.resolveAndBind(SecureModuleFinder.of(jars), parentConfigs, ModuleFinder.of(), targets);
-	} catch (ResolutionException e) {
-		resolveFail(jars,e);
+        } catch (ResolutionException e) {
+        	try {
+        		resolveFail(jars,e);
+        	} catch (Exception e1) {
+        		LOGGER.error("Failed to create module layer " + layer.name(), e1);
+        	}
 		throw e;
-	}
+		}
         var classLoader = classLoaderSupplier.create(cfg, parentLayers, parentLoaders);
 
         // TODO: [ML] This should actually find the correct CL for each module, not just use the newly created one
@@ -227,7 +226,7 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
     }
 
     
-    static void resolveFail(SecureJar[] jars, ResolutionException exception) {
+    static void resolveFail(SecureJar[] jars, ResolutionException exception) throws Exception{
     	List<String> premodules = extractModuleNames(exception.getMessage());
         StringBuilder build = new StringBuilder();
         build.append(exception.getMessage());

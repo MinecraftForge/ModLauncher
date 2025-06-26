@@ -87,6 +87,7 @@ public interface ITransformationService {
      * and {@link #initialize(IEnvironment)}, so you can return an appropriate Transformer set for the environment
      * you find yourself in.
      */
+    @SuppressWarnings("rawtypes")
     @NotNull
     List<ITransformer> transformers();
 

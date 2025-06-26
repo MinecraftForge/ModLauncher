@@ -66,7 +66,7 @@ public class LamdbaExceptionUtils {
     /**
      * uncheck(() -> Class.forName("xxx"));
      */
-    public static void uncheck(Runnable_WithExceptions t) {
+    public static void uncheck(@SuppressWarnings("rawtypes") Runnable_WithExceptions t) {
         try {
             t.run();
         } catch (Exception exception) {

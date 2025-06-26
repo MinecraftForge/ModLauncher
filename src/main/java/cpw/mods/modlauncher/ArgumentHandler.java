@@ -21,7 +21,7 @@ public class ArgumentHandler {
     private OptionSpec<Path> gameDirOption;
     private OptionSpec<Path> assetsDirOption;
     private OptionSpec<Path> minecraftJarOption;
-    private OptionSpec<String> nonOption;
+    //private OptionSpec<String> nonOption;
     private OptionSpec<String> launchTarget;
     private OptionSpec<String> uuidOption;
 
@@ -48,7 +48,7 @@ public class ArgumentHandler {
         launchTarget = parser.accepts("launchTarget", "LauncherService target to launch").withRequiredArg();
 
         parserConsumer.accept(parser);
-        nonOption = parser.nonOptions();
+        /*this.nonOption =*/ parser.nonOptions();
         this.optionSet = parser.parse(this.args);
         env.computePropertyIfAbsent(IEnvironment.Keys.VERSION.get(), s -> this.optionSet.valueOf(profileOption));
         env.computePropertyIfAbsent(IEnvironment.Keys.GAMEDIR.get(), f -> this.optionSet.valueOf(gameDirOption));

@@ -6,6 +6,8 @@
 package cpw.mods.modlauncher;
 
 public class InvalidLauncherSetupException extends IllegalStateException {
+    private static final long serialVersionUID = 6030083272490759567L;
+
     InvalidLauncherSetupException(final String s) {
         super(s);
     }

@@ -8,9 +8,11 @@ package cpw.mods.modlauncher;
 import java.util.*;
 
 /**
- * Exception thrown when a vote impass occurs
+ * Exception thrown when a vote impasse occurs
  */
 public class VoteDeadlockException extends RuntimeException {
+    private static final long serialVersionUID = 181787525265522023L;
+
     <T> VoteDeadlockException(List<TransformerVote<T>> votes, Class<?> aClass) {
     }
 }

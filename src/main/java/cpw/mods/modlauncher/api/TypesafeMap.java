@@ -95,7 +95,7 @@ public final class TypesafeMap {
         }
 
         @Override
-        public int compareTo(Key o) {
+        public int compareTo(@SuppressWarnings("rawtypes") Key o) {
             if (this == o) {
                 return 0;
             }

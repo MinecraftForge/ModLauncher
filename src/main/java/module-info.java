@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: LGPL-3.0-only
  */
 
+@SuppressWarnings({"rawtypes", "removal"})
 module cpw.mods.modlauncher {
     requires java.base;
     requires org.apache.logging.log4j;

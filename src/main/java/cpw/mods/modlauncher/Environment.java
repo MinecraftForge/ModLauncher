@@ -11,7 +11,6 @@ import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Environment implementation class

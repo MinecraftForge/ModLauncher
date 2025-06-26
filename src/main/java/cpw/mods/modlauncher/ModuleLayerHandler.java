@@ -5,21 +5,30 @@
 
 package cpw.mods.modlauncher;
 
-import net.minecraftforge.securemodules.SecureModuleClassLoader;
-import net.minecraftforge.securemodules.SecureModuleFinder;
-import cpw.mods.jarhandling.SecureJar;
-import cpw.mods.modlauncher.api.IModuleLayerManager;
-
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import cpw.mods.jarhandling.SecureJar;
+import cpw.mods.modlauncher.api.IModuleLayerManager;
+import cpw.mods.modlauncher.util.ModuleExceptionEnhancer;
+import net.minecraftforge.securemodules.SecureModuleClassLoader;
+import net.minecraftforge.securemodules.SecureModuleFinder;
 
 public final class ModuleLayerHandler implements IModuleLayerManager {
     record LayerInfo(ModuleLayer layer, ClassLoader cl) {}
     private final EnumMap<Layer, List<SecureJar>> layers = new EnumMap<>(Layer.class);
     private final EnumMap<Layer, LayerInfo> completedLayers = new EnumMap<>(Layer.class);
+    private static final Logger LOGGER = LogManager.getLogger();
 
     ModuleLayerHandler() {
         var classLoader = getClass().getClassLoader();
@@ -72,9 +81,14 @@ public final class ModuleLayerHandler implements IModuleLayerManager {
             parentConfigs.add(info.layer().configuration());
             parentLoaders.add(info.cl());
         }
-
-        var cfg = Configuration.resolveAndBind(SecureModuleFinder.of(jars), parentConfigs, ModuleFinder.of(), targets);
-
+        Configuration cfg = null;
+        try {
+            cfg = Configuration.resolveAndBind(SecureModuleFinder.of(jars), parentConfigs, ModuleFinder.of(), targets);
+        } catch (RuntimeException e) {
+            e = ModuleExceptionEnhancer.enhance(e, jars);
+            LOGGER.error("Failed to create module layer " + layer.name(), e);
+            throw e;
+        }
         var classLoader = classLoaderSupplier.create(cfg, parentLayers, parentLoaders);
 
         // TODO: [ML] This should actually find the correct CL for each module, not just use the newly created one
